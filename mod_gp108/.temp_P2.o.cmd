@@ -1,10 +1,8 @@
-savedcmd_.module-common.o := gcc -Wp,-MMD,./..module-common.o.d -nostdinc -I/usr/lib/modules/6.18.52-1-lts/build/arch/x86/include -I/usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/generated -I/usr/lib/modules/6.18.52-1-lts/build/include -I/usr/lib/modules/6.18.52-1-lts/build/include -I/usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/uapi -I/usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/generated/uapi -I/usr/lib/modules/6.18.52-1-lts/build/include/uapi -I/usr/lib/modules/6.18.52-1-lts/build/include/generated/uapi -include /usr/lib/modules/6.18.52-1-lts/build/include/linux/compiler-version.h -include /usr/lib/modules/6.18.52-1-lts/build/include/linux/kconfig.h -include /usr/lib/modules/6.18.52-1-lts/build/include/linux/compiler_types.h -D__KERNEL__ -std=gnu11 -fshort-wchar -funsigned-char -fno-common -fno-PIE -fno-strict-aliasing -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -mno-sse4a -fcf-protection=branch -fno-jump-tables -m64 -falign-jumps=1 -falign-loops=1 -mno-80387 -mno-fp-ret-in-387 -mpreferred-stack-boundary=3 -mskip-rax-setup -march=x86-64 -mtune=generic -mno-red-zone -mcmodel=kernel -mstack-protector-guard-reg=gs -mstack-protector-guard-symbol=__ref_stack_chk_guard -Wno-sign-compare -fno-asynchronous-unwind-tables -mindirect-branch=thunk-extern -mindirect-branch-register -mindirect-branch-cs-prefix -mfunction-return=thunk-extern -fno-jump-tables -mharden-sls=all -fpatchable-function-entry=16,16 -fno-delete-null-pointer-checks -O2 -fno-allow-store-data-races -fstack-protector-strong -ftrivial-auto-var-init=zero -fzero-init-padding-bits=all -fno-stack-clash-protection -pg -mrecord-mcount -mfentry -DCC_USING_FENTRY -fmin-function-alignment=16 -fstrict-flex-arrays=3 -fno-strict-overflow -fno-stack-check -fconserve-stack -fno-builtin-wcslen -Wall -Wextra -Wundef -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Werror=strict-prototypes -Wno-format-security -Wno-trigraphs -Wno-frame-address -Wno-address-of-packed-member -Wmissing-declarations -Wmissing-prototypes -Wframe-larger-than=2048 -Wno-main -Wno-dangling-pointer -Wvla-larger-than=1 -Wno-pointer-sign -Wcast-function-type -Wno-unterminated-string-initialization -Wno-array-bounds -Wno-stringop-overflow -Wno-alloc-size-larger-than -Wimplicit-fallthrough=5 -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wenum-conversion -Wunused -Wno-unused-but-set-variable -Wno-unused-const-variable -Wno-packed-not-aligned -Wno-format-overflow -Wno-format-truncation -Wno-stringop-truncation -Wno-override-init -Wno-missing-field-initializers -Wno-type-limits -Wno-shift-negative-value -Wno-maybe-uninitialized -Wno-sign-compare -Wno-unused-parameter -g -gdwarf-5  -DMODULE  -DKBUILD_BASENAME='".module_common"' -DKBUILD_MODNAME='".module_common.o"' -D__KBUILD_MODNAME=kmod_.module_common.o -c -o .module-common.o /usr/lib/modules/6.18.52-1-lts/build/scripts/module-common.c   ; /usr/lib/modules/6.18.52-1-lts/build/tools/objtool/objtool --hacks=jump_label --hacks=noinstr --hacks=skylake --ibt --orc --retpoline --rethunk --sls --static-call --uaccess --prefix=16  --link  --module .module-common.o
+savedcmd_temp_P2.o := gcc -Wp,-MMD,./.temp_P2.o.d -nostdinc -I/usr/lib/modules/6.18.52-1-lts/build/arch/x86/include -I/usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/generated -I/usr/lib/modules/6.18.52-1-lts/build/include -I/usr/lib/modules/6.18.52-1-lts/build/include -I/usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/uapi -I/usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/generated/uapi -I/usr/lib/modules/6.18.52-1-lts/build/include/uapi -I/usr/lib/modules/6.18.52-1-lts/build/include/generated/uapi -include /usr/lib/modules/6.18.52-1-lts/build/include/linux/compiler-version.h -include /usr/lib/modules/6.18.52-1-lts/build/include/linux/kconfig.h -include /usr/lib/modules/6.18.52-1-lts/build/include/linux/compiler_types.h -D__KERNEL__ -std=gnu11 -fshort-wchar -funsigned-char -fno-common -fno-PIE -fno-strict-aliasing -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -mno-sse4a -fcf-protection=branch -fno-jump-tables -m64 -falign-jumps=1 -falign-loops=1 -mno-80387 -mno-fp-ret-in-387 -mpreferred-stack-boundary=3 -mskip-rax-setup -march=x86-64 -mtune=generic -mno-red-zone -mcmodel=kernel -mstack-protector-guard-reg=gs -mstack-protector-guard-symbol=__ref_stack_chk_guard -Wno-sign-compare -fno-asynchronous-unwind-tables -mindirect-branch=thunk-extern -mindirect-branch-register -mindirect-branch-cs-prefix -mfunction-return=thunk-extern -fno-jump-tables -mharden-sls=all -fpatchable-function-entry=16,16 -fno-delete-null-pointer-checks -O2 -fno-allow-store-data-races -fstack-protector-strong -ftrivial-auto-var-init=zero -fzero-init-padding-bits=all -fno-stack-clash-protection -pg -mrecord-mcount -mfentry -DCC_USING_FENTRY -fmin-function-alignment=16 -fstrict-flex-arrays=3 -fno-strict-overflow -fno-stack-check -fconserve-stack -fno-builtin-wcslen -Wall -Wextra -Wundef -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Werror=strict-prototypes -Wno-format-security -Wno-trigraphs -Wno-frame-address -Wno-address-of-packed-member -Wmissing-declarations -Wmissing-prototypes -Wframe-larger-than=2048 -Wno-main -Wno-dangling-pointer -Wvla-larger-than=1 -Wno-pointer-sign -Wcast-function-type -Wno-unterminated-string-initialization -Wno-array-bounds -Wno-stringop-overflow -Wno-alloc-size-larger-than -Wimplicit-fallthrough=5 -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wenum-conversion -Wunused -Wno-unused-but-set-variable -Wno-unused-const-variable -Wno-packed-not-aligned -Wno-format-overflow -Wno-format-truncation -Wno-stringop-truncation -Wno-override-init -Wno-missing-field-initializers -Wno-type-limits -Wno-shift-negative-value -Wno-maybe-uninitialized -Wno-sign-compare -Wno-unused-parameter -g -gdwarf-5  -DMODULE  -DKBUILD_BASENAME='"temp_P2"' -DKBUILD_MODNAME='"temp_P2"' -D__KBUILD_MODNAME=kmod_temp_P2 -c -o temp_P2.o temp_P2.c   ; /usr/lib/modules/6.18.52-1-lts/build/tools/objtool/objtool --hacks=jump_label --hacks=noinstr --hacks=skylake --ibt --orc --retpoline --rethunk --sls --static-call --uaccess --prefix=16  --link  --module temp_P2.o
 
-source_.module-common.o := /usr/lib/modules/6.18.52-1-lts/build/scripts/module-common.c
+source_temp_P2.o := temp_P2.c
 
-deps_.module-common.o := \
-    $(wildcard include/config/UNWINDER_ORC) \
-    $(wildcard include/config/MITIGATION_RETPOLINE) \
+deps_temp_P2.o := \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/compiler-version.h \
     $(wildcard include/config/CC_VERSION_TEXT) \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/kconfig.h \
@@ -36,37 +34,9 @@ deps_.module-common.o := \
     $(wildcard include/config/SHADOW_CALL_STACK) \
     $(wildcard include/config/KCOV) \
     $(wildcard include/config/CC_HAS_TYPEOF_UNQUAL) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/module.h \
-    $(wildcard include/config/MODULES) \
-    $(wildcard include/config/SYSFS) \
-    $(wildcard include/config/MODULES_TREE_LOOKUP) \
-    $(wildcard include/config/LIVEPATCH) \
-    $(wildcard include/config/STACKTRACE_BUILD_ID) \
-    $(wildcard include/config/ARCH_USES_CFI_TRAPS) \
-    $(wildcard include/config/MODULE_SIG) \
-    $(wildcard include/config/GENERIC_BUG) \
-    $(wildcard include/config/KALLSYMS) \
-    $(wildcard include/config/SMP) \
-    $(wildcard include/config/TRACEPOINTS) \
-    $(wildcard include/config/TREE_SRCU) \
-    $(wildcard include/config/BPF_EVENTS) \
-    $(wildcard include/config/DEBUG_INFO_BTF_MODULES) \
-    $(wildcard include/config/JUMP_LABEL) \
-    $(wildcard include/config/TRACING) \
-    $(wildcard include/config/EVENT_TRACING) \
-    $(wildcard include/config/DYNAMIC_FTRACE) \
-    $(wildcard include/config/KPROBES) \
-    $(wildcard include/config/HAVE_STATIC_CALL_INLINE) \
-    $(wildcard include/config/KUNIT) \
-    $(wildcard include/config/PRINTK_INDEX) \
-    $(wildcard include/config/MODULE_UNLOAD) \
-    $(wildcard include/config/CONSTRUCTORS) \
-    $(wildcard include/config/FUNCTION_ERROR_INJECTION) \
-    $(wildcard include/config/DYNAMIC_DEBUG_CORE) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/list.h \
-    $(wildcard include/config/LIST_HARDENED) \
-    $(wildcard include/config/DEBUG_LIST) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/container_of.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/init.h \
+    $(wildcard include/config/MEMORY_HOTPLUG) \
+    $(wildcard include/config/HAVE_ARCH_PREL32_RELOCATIONS) \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/build_bug.h \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/compiler.h \
     $(wildcard include/config/TRACE_BRANCH_PROFILING) \
@@ -102,6 +72,39 @@ deps_.module-common.o := \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/kcsan-checks.h \
     $(wildcard include/config/KCSAN_WEAK_MEMORY) \
     $(wildcard include/config/KCSAN_IGNORE_ATOMICS) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/stringify.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/module.h \
+    $(wildcard include/config/MODULES) \
+    $(wildcard include/config/SYSFS) \
+    $(wildcard include/config/MODULES_TREE_LOOKUP) \
+    $(wildcard include/config/LIVEPATCH) \
+    $(wildcard include/config/STACKTRACE_BUILD_ID) \
+    $(wildcard include/config/ARCH_USES_CFI_TRAPS) \
+    $(wildcard include/config/MODULE_SIG) \
+    $(wildcard include/config/GENERIC_BUG) \
+    $(wildcard include/config/KALLSYMS) \
+    $(wildcard include/config/SMP) \
+    $(wildcard include/config/TRACEPOINTS) \
+    $(wildcard include/config/TREE_SRCU) \
+    $(wildcard include/config/BPF_EVENTS) \
+    $(wildcard include/config/DEBUG_INFO_BTF_MODULES) \
+    $(wildcard include/config/JUMP_LABEL) \
+    $(wildcard include/config/TRACING) \
+    $(wildcard include/config/EVENT_TRACING) \
+    $(wildcard include/config/DYNAMIC_FTRACE) \
+    $(wildcard include/config/KPROBES) \
+    $(wildcard include/config/HAVE_STATIC_CALL_INLINE) \
+    $(wildcard include/config/KUNIT) \
+    $(wildcard include/config/PRINTK_INDEX) \
+    $(wildcard include/config/MODULE_UNLOAD) \
+    $(wildcard include/config/CONSTRUCTORS) \
+    $(wildcard include/config/FUNCTION_ERROR_INJECTION) \
+    $(wildcard include/config/DYNAMIC_DEBUG_CORE) \
+    $(wildcard include/config/MITIGATION_RETPOLINE) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/list.h \
+    $(wildcard include/config/LIST_HARDENED) \
+    $(wildcard include/config/DEBUG_LIST) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/container_of.h \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/poison.h \
     $(wildcard include/config/ILLEGAL_POINTER_VALUE) \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/const.h \
@@ -112,7 +115,6 @@ deps_.module-common.o := \
     $(wildcard include/config/CALL_THUNKS) \
     $(wildcard include/config/MITIGATION_ITS) \
     $(wildcard include/config/MITIGATION_RETHUNK) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/stringify.h \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/objtool.h \
     $(wildcard include/config/FRAME_POINTER) \
     $(wildcard include/config/NOINSTR_VALIDATION) \
@@ -138,9 +140,6 @@ deps_.module-common.o := \
     $(wildcard include/config/EARLY_PRINTK) \
     $(wildcard include/config/PRINTK) \
     $(wildcard include/config/DYNAMIC_DEBUG) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/init.h \
-    $(wildcard include/config/MEMORY_HOTPLUG) \
-    $(wildcard include/config/HAVE_ARCH_PREL32_RELOCATIONS) \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/kern_levels.h \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/linkage.h \
     $(wildcard include/config/ARCH_USE_SYM_ANNOTATIONS) \
@@ -1082,45 +1081,219 @@ deps_.module-common.o := \
   /usr/lib/modules/6.18.52-1-lts/build/include/linux/error-injection.h \
   /usr/lib/modules/6.18.52-1-lts/build/include/asm-generic/error-injection.h \
   /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/module.h \
+    $(wildcard include/config/UNWINDER_ORC) \
   /usr/lib/modules/6.18.52-1-lts/build/include/asm-generic/module.h \
     $(wildcard include/config/HAVE_MOD_ARCH_SPECIFIC) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/build-salt.h \
-    $(wildcard include/config/BUILD_SALT) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/elfnote.h \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/elfnote-lto.h \
-    $(wildcard include/config/LTO) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/linux/vermagic.h \
-    $(wildcard include/config/PREEMPT_BUILD) \
-  /usr/lib/modules/6.18.52-1-lts/build/include/generated/utsrelease.h \
-  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/vermagic.h \
-    $(wildcard include/config/M486SX) \
-    $(wildcard include/config/M486) \
-    $(wildcard include/config/M586) \
-    $(wildcard include/config/M586TSC) \
-    $(wildcard include/config/M586MMX) \
-    $(wildcard include/config/MATOM) \
-    $(wildcard include/config/M686) \
-    $(wildcard include/config/MPENTIUMII) \
-    $(wildcard include/config/MPENTIUMIII) \
-    $(wildcard include/config/MPENTIUMM) \
-    $(wildcard include/config/MPENTIUM4) \
-    $(wildcard include/config/MK6) \
-    $(wildcard include/config/MK7) \
-    $(wildcard include/config/MELAN) \
-    $(wildcard include/config/MCRUSOE) \
-    $(wildcard include/config/MEFFICEON) \
-    $(wildcard include/config/MWINCHIPC6) \
-    $(wildcard include/config/MWINCHIP3D) \
-    $(wildcard include/config/MCYRIXIII) \
-    $(wildcard include/config/MVIAC3_2) \
-    $(wildcard include/config/MVIAC7) \
-    $(wildcard include/config/MGEODEGX1) \
-    $(wildcard include/config/MGEODE_LX) \
-  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/orc_header.h \
-  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/generated/asm/orc_hash.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/pci.h \
+    $(wildcard include/config/PCI_IOV) \
+    $(wildcard include/config/PCIEAER) \
+    $(wildcard include/config/PCIEPORTBUS) \
+    $(wildcard include/config/PCIEASPM) \
+    $(wildcard include/config/HOTPLUG_PCI_PCIE) \
+    $(wildcard include/config/PCIE_PTM) \
+    $(wildcard include/config/PCI_MSI) \
+    $(wildcard include/config/PCIE_DPC) \
+    $(wildcard include/config/PCI_ATS) \
+    $(wildcard include/config/PCI_PRI) \
+    $(wildcard include/config/PCI_PASID) \
+    $(wildcard include/config/PCI_P2PDMA) \
+    $(wildcard include/config/PCI_DOE) \
+    $(wildcard include/config/PCI_NPEM) \
+    $(wildcard include/config/PCIE_TPH) \
+    $(wildcard include/config/PCI_DOMAINS_GENERIC) \
+    $(wildcard include/config/PCI) \
+    $(wildcard include/config/HOTPLUG_PCI) \
+    $(wildcard include/config/DEBUG_FS) \
+    $(wildcard include/config/PCI_DOMAINS) \
+    $(wildcard include/config/ACPI) \
+    $(wildcard include/config/PCI_QUIRKS) \
+    $(wildcard include/config/ACPI_MCFG) \
+    $(wildcard include/config/OF) \
+    $(wildcard include/config/X86) \
+    $(wildcard include/config/EEH) \
+    $(wildcard include/config/S390) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/mod_devicetable.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/uapi/linux/mei.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/uapi/linux/mei_uuid.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/ioport.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/device.h \
+    $(wildcard include/config/GENERIC_MSI_IRQ) \
+    $(wildcard include/config/ENERGY_MODEL) \
+    $(wildcard include/config/PINCTRL) \
+    $(wildcard include/config/ARCH_HAS_DMA_OPS) \
+    $(wildcard include/config/DMA_DECLARE_COHERENT) \
+    $(wildcard include/config/DMA_CMA) \
+    $(wildcard include/config/SWIOTLB) \
+    $(wildcard include/config/SWIOTLB_DYNAMIC) \
+    $(wildcard include/config/ARCH_HAS_SYNC_DMA_FOR_DEVICE) \
+    $(wildcard include/config/ARCH_HAS_SYNC_DMA_FOR_CPU) \
+    $(wildcard include/config/ARCH_HAS_SYNC_DMA_FOR_CPU_ALL) \
+    $(wildcard include/config/DMA_OPS_BYPASS) \
+    $(wildcard include/config/DMA_NEED_SYNC) \
+    $(wildcard include/config/IOMMU_DMA) \
+    $(wildcard include/config/PM) \
+    $(wildcard include/config/PM_SLEEP) \
+    $(wildcard include/config/DEVTMPFS) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/dev_printk.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/energy_model.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/sched/cpufreq.h \
+    $(wildcard include/config/CPU_FREQ) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/sched/topology.h \
+    $(wildcard include/config/SCHED_CLUSTER) \
+    $(wildcard include/config/SCHED_MC) \
+    $(wildcard include/config/CPU_FREQ_GOV_SCHEDUTIL) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/sched/idle.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/sched/sd_flags.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/klist.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/pm.h \
+    $(wildcard include/config/VT_CONSOLE_SLEEP) \
+    $(wildcard include/config/CXL_SUSPEND) \
+    $(wildcard include/config/PM_CLK) \
+    $(wildcard include/config/PM_GENERIC_DOMAINS) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/device/bus.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/device/class.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/device/devres.h \
+    $(wildcard include/config/HAS_IOMEM) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/device/driver.h \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/device.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/pm_wakeup.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/interrupt.h \
+    $(wildcard include/config/IRQ_FORCED_THREADING) \
+    $(wildcard include/config/GENERIC_IRQ_PROBE) \
+    $(wildcard include/config/IRQ_TIMINGS) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/irqreturn.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/hardirq.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/context_tracking_state.h \
+    $(wildcard include/config/CONTEXT_TRACKING_USER) \
+    $(wildcard include/config/CONTEXT_TRACKING) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/ftrace_irq.h \
+    $(wildcard include/config/HWLAT_TRACER) \
+    $(wildcard include/config/OSNOISE_TRACER) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/vtime.h \
+    $(wildcard include/config/VIRT_CPU_ACCOUNTING) \
+    $(wildcard include/config/IRQ_TIME_ACCOUNTING) \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/hardirq.h \
+    $(wildcard include/config/KVM_INTEL) \
+    $(wildcard include/config/KVM) \
+    $(wildcard include/config/X86_THERMAL_VECTOR) \
+    $(wildcard include/config/X86_MCE_THRESHOLD) \
+    $(wildcard include/config/X86_MCE_AMD) \
+    $(wildcard include/config/X86_HV_CALLBACK_VECTOR) \
+    $(wildcard include/config/HYPERV) \
+    $(wildcard include/config/X86_POSTED_MSI) \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/irq.h \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/irq_vectors.h \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/sections.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/asm-generic/sections.h \
+    $(wildcard include/config/HAVE_FUNCTION_DESCRIPTORS) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/io.h \
+    $(wildcard include/config/HAS_IOPORT_MAP) \
+    $(wildcard include/config/STRICT_DEVMEM) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/sizes.h \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/io.h \
+    $(wildcard include/config/MTRR) \
+    $(wildcard include/config/X86_PAT) \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/generated/asm/early_ioremap.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/asm-generic/early_ioremap.h \
+    $(wildcard include/config/GENERIC_EARLY_IOREMAP) \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/shared/io.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/asm-generic/io.h \
+    $(wildcard include/config/GENERIC_IOMAP) \
+    $(wildcard include/config/TRACE_MMIO_ACCESS) \
+    $(wildcard include/config/HAS_IOPORT) \
+    $(wildcard include/config/GENERIC_IOREMAP) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/asm-generic/iomap.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/asm-generic/pci_iomap.h \
+    $(wildcard include/config/NO_GENERIC_PCI_IOPORT_MAP) \
+    $(wildcard include/config/GENERIC_PCI_IOMAP) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/logic_pio.h \
+    $(wildcard include/config/INDIRECT_PIO) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/fwnode.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/resource_ext.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/msi_api.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/uapi/linux/pci.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/uapi/linux/pci_regs.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/pci_ids.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/dmapool.h \
+    $(wildcard include/config/HAS_DMA) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/scatterlist.h \
+    $(wildcard include/config/NEED_SG_DMA_LENGTH) \
+    $(wildcard include/config/NEED_SG_DMA_FLAGS) \
+    $(wildcard include/config/DEBUG_SG) \
+    $(wildcard include/config/SGL_ALLOC) \
+    $(wildcard include/config/ARCH_NO_SG_CHAIN) \
+    $(wildcard include/config/SG_POOL) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/mm.h \
+    $(wildcard include/config/HAVE_ARCH_MMAP_RND_BITS) \
+    $(wildcard include/config/HAVE_ARCH_MMAP_RND_COMPAT_BITS) \
+    $(wildcard include/config/ARCH_USES_HIGH_VMA_FLAGS) \
+    $(wildcard include/config/ARCH_HAS_PKEYS) \
+    $(wildcard include/config/ARCH_PKEY_BITS) \
+    $(wildcard include/config/ARM64_GCS) \
+    $(wildcard include/config/PARISC) \
+    $(wildcard include/config/SPARC64) \
+    $(wildcard include/config/ARM64_MTE) \
+    $(wildcard include/config/HAVE_ARCH_USERFAULTFD_MINOR) \
+    $(wildcard include/config/PPC32) \
+    $(wildcard include/config/FIND_NORMAL_PAGE) \
+    $(wildcard include/config/SHMEM) \
+    $(wildcard include/config/HAVE_GIGANTIC_FOLIOS) \
+    $(wildcard include/config/ARCH_HAS_PTE_SPECIAL) \
+    $(wildcard include/config/ASYNC_KERNEL_PGTABLE_FREE) \
+    $(wildcard include/config/SPLIT_PTE_PTLOCKS) \
+    $(wildcard include/config/HIGHPTE) \
+    $(wildcard include/config/DEBUG_VM_RB) \
+    $(wildcard include/config/PAGE_POISONING) \
+    $(wildcard include/config/INIT_ON_ALLOC_DEFAULT_ON) \
+    $(wildcard include/config/INIT_ON_FREE_DEFAULT_ON) \
+    $(wildcard include/config/DEBUG_PAGEALLOC) \
+    $(wildcard include/config/ARCH_WANT_OPTIMIZE_DAX_VMEMMAP) \
+    $(wildcard include/config/HUGETLBFS) \
+    $(wildcard include/config/MAPPING_DIRTY_HELPERS) \
+    $(wildcard include/config/MSEAL_SYSTEM_MAPPINGS) \
+    $(wildcard include/config/PAGE_POOL) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/pgalloc_tag.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/page_ext.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/stacktrace.h \
+    $(wildcard include/config/ARCH_STACKWALK) \
+    $(wildcard include/config/STACKTRACE) \
+    $(wildcard include/config/HAVE_RELIABLE_STACKTRACE) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/page_ref.h \
+    $(wildcard include/config/DEBUG_PAGE_REF) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/pgtable.h \
+    $(wildcard include/config/ARCH_HAS_NONLEAF_PMD_YOUNG) \
+    $(wildcard include/config/ARCH_HAS_HW_PTE_YOUNG) \
+    $(wildcard include/config/GUP_GET_PXX_LOW_HIGH) \
+    $(wildcard include/config/ARCH_WANT_PMD_MKWRITE) \
+    $(wildcard include/config/HAVE_ARCH_HUGE_VMAP) \
+    $(wildcard include/config/X86_ESPFIX64) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/memremap.h \
+    $(wildcard include/config/DEVICE_PRIVATE) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/cacheinfo.h \
+    $(wildcard include/config/ACPI_PPTT) \
+    $(wildcard include/config/ARM) \
+    $(wildcard include/config/ARCH_HAS_CPU_CACHE_ALIASING) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/cpuhplock.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/huge_mm.h \
+    $(wildcard include/config/PGTABLE_HAS_HUGE_LEAVES) \
+    $(wildcard include/config/PERSISTENT_HUGE_ZERO_FOLIO) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/vmstat.h \
+    $(wildcard include/config/VM_EVENT_COUNTERS) \
+    $(wildcard include/config/DEBUG_TLBFLUSH) \
+    $(wildcard include/config/PER_VMA_LOCK_STATS) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/vm_event_item.h \
+    $(wildcard include/config/MEMORY_BALLOON) \
+    $(wildcard include/config/BALLOON_COMPACTION) \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/pci.h \
+    $(wildcard include/config/VMD) \
+  /usr/lib/modules/6.18.52-1-lts/build/arch/x86/include/asm/memtype.h \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/dma-mapping.h \
+    $(wildcard include/config/DMA_API_DEBUG) \
+    $(wildcard include/config/NEED_DMA_MAP_STATE) \
+  /usr/lib/modules/6.18.52-1-lts/build/include/linux/dma-direction.h \
 
-.module-common.o: $(deps_.module-common.o)
+temp_P2.o: $(deps_temp_P2.o)
 
-$(deps_.module-common.o):
+$(deps_temp_P2.o):
 
-.module-common.o: $(wildcard /usr/lib/modules/6.18.52-1-lts/build/tools/objtool/objtool)
+temp_P2.o: $(wildcard /usr/lib/modules/6.18.52-1-lts/build/tools/objtool/objtool)

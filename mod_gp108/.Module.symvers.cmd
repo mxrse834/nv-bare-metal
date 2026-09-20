@@ -1,1 +1,1 @@
-savedcmd_Module.symvers :=  /usr/lib/modules/6.18.36-1-lts/build/scripts/mod/modpost -M    -a    -N  -o Module.symvers -n -T modules.order -i /usr/lib/modules/6.18.36-1-lts/build/Module.symvers -e 
+savedcmd_Module.symvers :=  /usr/lib/modules/6.18.52-1-lts/build/scripts/mod/modpost -M    -a    -N  -o Module.symvers -n -T modules.order -i /usr/lib/modules/6.18.52-1-lts/build/Module.symvers -e 

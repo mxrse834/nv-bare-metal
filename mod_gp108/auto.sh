@@ -8,7 +8,7 @@ echo "Building..."
 make
 
 echo "Loading..."
-sudo insmod temp_c.ko
+sudo insmod temp_P2.ko
 
 echo "KERNEL LOG"
 sudo dmesg | tail -10

@@ -1,0 +1,1 @@
+savedcmd_temp_P2.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T /usr/lib/modules/6.18.52-1-lts/build/scripts/module.lds -o temp_P2.ko temp_P2.o temp_P2.mod.o .module-common.o

@@ -1,346 +1,428 @@
 # nv-bare-metal
+##Experimental Linux PCI driver for exploring GP108 MMIO, DMA, PFIFO, and GPU command submission.
 
-## Bare-metal access to NVIDIA hardware
+## Learning NVIDIA hardware from the other side of CUDA
 
-This is a purely educational project aimed at understanding the GPU pipeline in greater depth. Please follow along only on your own hardware and at your own risk.
+This is a purely educational project aimed at understanding the NVIDIA GPU pipeline in greater depth by interacting with a spare GPU directly from a Linux PCI driver.
 
-Initially, I started this project in Rust, but due to current kernel limitations, I had to switch to C. In hindsight, I feel C is far more intuitive when working close to the hardware. It also makes for a better educational project, as we can focus on understanding the hardware concepts rather than the language semantics.
+It is **not** a replacement NVIDIA driver, and it cannot submit work to the GPU yet. The current driver can bind to my GP108, map BAR0, inspect selected registers, enable a couple of engine gates experimentally, and keep a coherent DMA buffer alive for the lifetime of the device.
 
-Please clone `envytools` before you start; it's a simply amazing resource made possible by the effort of the community.
+Please follow along only on hardware you are willing to experiment with and entirely at your own risk. A wrong MMIO write can hang the GPU or the whole machine :))
+
+I initially started this project in Rust, but switched to C because of the current state of Rust support in my kernel setup. In hindsight, C also feels more direct for this project: I can focus on PCI, MMIO, DMA, and the GPU itself instead of fighting language or kernel-support details.
+
+The biggest reference for this work has been [envytools](https://github.com/envytools/envytools), an amazing community effort for documenting NVIDIA hardware:
 
 ```bash
 git clone https://github.com/envytools/envytools.git
 ```
 
-You are recommended to follow along starting with the README up to **P1**, after which each part **Pi** of the README corresponds to the code commit **Pi**.
-
-Sorry for any inaccuracies, misinterpretations, or gaps in understanding on my part. You are encouraged to help me correct them. Thank you :))
+This is still an ongoing learning project. There may be inaccuracies or gaps in my understanding, and corrections are very welcome.
 
 ---
 
-# Hardware Setup
+## Current status
+
+### P1 — first contact with the GPU
+
+- Registered a Linux PCI driver for NVIDIA device `10de:1d01`
+- Enabled the PCI device and reserved its BAR regions
+- Mapped BAR0 into kernel virtual memory
+- Read PMC, interrupt, PFIFO, and PTIMER registers through MMIO
+- Allocated coherent DMA memory and inspected the returned CPU and DMA addresses
+
+### P2 — persistent driver state
+
+- Added per-device private state using `struct pvt_dev`
+- Stored the BAR0 mapping and DMA allocation in that state
+- Attached it to the PCI device using `pci_set_drvdata()`
+- Kept the resources alive after `probe()` returned
+- Recovered and released them from `remove()`
+
+### Not implemented yet
+
+- VBIOS parsing and firmware loading
+- Complete engine initialization
+- GMMU page-table construction
+- PFIFO channels, runlists, and PBDMA setup
+- Pushbuffer submission
+- Interrupt handling
+- PGRAPH or compute execution
+
+In particular, setting the PFIFO bit in `PMC_ENABLE` only opens/enables that engine gate. It does **not** mean PFIFO has been initialized or that it can consume commands.
+
+---
+
+## Hardware setup
 
 ```text
-Architecture : x86-64
-
-GPU          : NVIDIA GT 1030 (GP108)
-
-The GT 1030 has been blacklisted from initialization by the NVIDIA driver.
-This is because driver version 595 (required by the RTX 2070 Super)
-does not support GP108 and therefore leaves the card in a partially
-initialized state.
+CPU architecture : x86-64
+Target GPU       : NVIDIA GT 1030 (GP108, PCI ID 10de:1d01)
+Main GPU         : NVIDIA RTX 2070 Super
+Operating system : Linux
 ```
 
+On my machine, the GT 1030 is left unclaimed by the installed NVIDIA driver stack. The newer driver is needed for the RTX 2070 Super but does not initialize this GP108 in my particular setup, leaving it available for experimentation.
+
+That detail is specific to my machine and driver configuration. Do not assume another GPU is safe to bind to an experimental module merely because it has the same architecture.
+
 ---
 
-# CUDA Software Stack
+## Where this sits below CUDA
+
+When we normally launch a CUDA kernel, several software layers hide the hardware-facing work:
 
 ```text
+CUDA application
+        ↓
 CUDA runtime (libcudart)
         ↓
-CUDA driver (libcuda)
+CUDA user-mode driver (libcuda)
         ↓
-Kernel driver (nvidia.ko)
+NVIDIA kernel driver
         ↓
-Hardware command ring
+GPU command submission and hardware engines
 ```
+
+This project starts near the bottom of that stack. Instead of asking CUDA to manage the GPU, the kernel module binds to the PCI device and interacts with registers exposed through its Base Address Registers.
 
 ---
 
-# Locating the GPU
+## Locating the GPU
+
+The target GPU can be located on the PCI bus with:
 
 ```bash
 lspci | grep "GT 1030"
 ```
 
----
-
-# MMIO Layout
+On my system it appears at `03:00.0`. Its PCI resources can then be inspected with:
 
 ```bash
 lspci -s 03:00.0 -vv
 ```
 
+The relevant layout reported on my machine is:
+
 ```text
 Region 0: Memory at f4000000 (32-bit, non-prefetchable) [size=16M]
-          Registers
+          GPU registers
 
 Region 1: Memory at e0000000 (64-bit, prefetchable) [size=256M]
           Memory aperture
 
 Region 3: Memory at f0000000 (64-bit, prefetchable) [size=32M]
-          Extra memory window
+          Additional memory window
 
 Region 5: I/O ports at d000 [size=128]
-          Legacy x86 compatibility ports
+          Legacy I/O-port space
 
 Expansion ROM at f5000000 [disabled] [size=512K]
-          GPU firmware (VBIOS / UEFI GOP)
+          GPU VBIOS / UEFI GOP image
 ```
+
+These addresses are assigned by the platform and are not portable constants. The driver asks the PCI subsystem for the resources instead of hard-coding the physical addresses.
 
 ---
 
-# P1
+# P1 — mapping BAR0 and reading the GPU
 
-## Software Stack Built
-
-(PMC = Power Management Control. It provides the vendor ID, device ID, enabled engines, etc.)
+P1 established the smallest useful hardware-access path:
 
 ```text
-temp_c.ko (kernel module)
+temp_c.ko
         ↓
-Registered with the Linux PCI subsystem
+registered with the Linux PCI subsystem
         ↓
-Kernel matched PCI ID 10de:1d01
+matched PCI ID 10de:1d01
         ↓
 probe()
         ↓
-Enabled device
+enabled the PCI device
         ↓
-Reserved BAR0
+reserved its BAR regions
         ↓
-Mapped BAR0
+mapped BAR0 with pci_iomap()
         ↓
-ioread32() crossed the PCIe bus
+ioread32() performed MMIO reads
         ↓
-GPU registers read
-        ↓
-Values printed to dmesg
+register values appeared in dmesg
 ```
 
----
-
-## Registers Read
-
-| Offset | Register   | Value      | Meaning                               |
-| -----: | ---------- | ---------- | ------------------------------------- |
-|  0x000 | PMC_ID     | 0x138000a1 | GP108, Pascal, TSMC fabrication       |
-|  0x200 | PMC_ENABLE | 0x40002020 | Only PIBUS, PDAEMON, PDISPLAY enabled |
-|  0x100 | INTR_HOST  | 0x00000000 | No pending interrupts                 |
-|  0xa00 | PMC_NEW_ID | 0x138a1000 | Confirms GP108 identity               |
-
-`envytools` contains documentation for many possible `PMC_ENABLE` combinations.
-
-Extraction pattern used for each field:
+At this point the interesting part was not merely printing four integers. A read such as:
 
 ```c
-(raw >> lower_bit) & ((1 << width) - 1)
+p0 = ioread32(bar0 + 0x000);
 ```
-## PMC_ENABLE
 
-### 1) PTIMER
+travels through a kernel virtual mapping backed by a PCI BAR and reaches a hardware register on the GPU.
+
+## Registers observed
+
+The following values were observed on my GP108. They are measurements from this machine, not values that should be expected from every GP108:
+
+| Offset | Register | Observed value | Interpretation |
+| ---: | --- | ---: | --- |
+| `0x000` | `PMC_ID` | `0x138000a1` | Identifies the GPU/chip configuration |
+| `0x100` | `INTR_HOST` | `0x00000000` | No host interrupt was pending when read |
+| `0x200` | `PMC_ENABLE` | `0x40002020` | Shows which top-level engine gates were enabled |
+| `0xa00` | `PMC_NEW_ID` | `0x138a1000` | Additional chipset-identification information |
+
+Here PMC refers to NVIDIA's top-level **master-control** block. `envytools` contains the register and bitfield definitions used to interpret these raw values.
+
+A typical bitfield extraction looks like:
+
+```c
+(raw >> lower_bit) & ((1U << width) - 1U)
+```
+
+## PTIMER
+
+The timer registers explored so far are:
 
 ```text
-0x9400 : TIMER LOW
-0x9410 : TIMER HIGH
+0x9400 : timer low
+0x9410 : timer high
 ```
+
+Reading the low register twice produced two increasing values, which was a simple way of confirming that the timer was live after its PMC gate was enabled.
+
+## PFIFO
+
+PFIFO is part of NVIDIA's command-submission machinery. At a high level, the working model I am using is:
+
+- User-mode or kernel-mode software constructs GPU commands in a pushbuffer.
+- A channel provides the GPU execution context associated with submitted work.
+- Runnable channels are represented through runlists.
+- PBDMAs fetch and process command streams on behalf of scheduled channels.
+- GPU virtual addresses used by those engines are translated through the GMMU.
+
+There can be many channels and only a smaller number of hardware PBDMAs, so the GPU schedules channels onto the available command-fetch machinery.
+
+This is deliberately a simplified mental model. The exact relationship among channels, pushbuffers, runlists, PBDMAs, engines, and synchronization is more nuanced and is one of the things this project is meant to investigate.
 
 ---
 
-### 2) PFIFO (bit 8 in PMC_ENABLE)
+## Connecting this back to CUDA
 
-Multiple channels process multiple streams of data that are assigned by a PBDMA (Push Buffer DMA).
+From the CUDA side, operations such as allocation and kernel launch look simple:
 
-Ready channels are contained within a **runlist**. The channels themselves are stored in GPU-managed instance memory.
+```cpp
+cudaMalloc(&ptr, size);
+kernel<<<grid, block>>>(ptr);
+```
 
-A **pushbuffer** is a ring buffer allocated in either system memory or VRAM.
+Below that interface, the driver must manage GPU address spaces, memory residency, channels, synchronization, and command submission. Conceptually:
 
-Putting everything together:
+1. A CUDA allocation creates device-accessible storage and the mappings needed for the GPU to address it.
+2. A launch eventually becomes commands written into driver-managed command buffers.
+3. The GPU command-processing machinery fetches and dispatches that work.
 
-* A small number of **PBDMAs** map pushbuffers to channels.
-* There may be many pushbuffers, since they are essentially pointers to virtual addresses.
-* A channel has a 1:1 relationship with a pushbuffer in terms of quantity, although not necessarily a fixed mapping.
-* Channels are scheduled using the runlist.
+The exact placement of an allocation and exact command path depend on the CUDA and driver memory-management configuration. The point here is not that `cudaMalloc()` always corresponds to one fixed hardware action; it is that a large amount of driver and GPU setup exists beneath that one call.
 
-All communication ultimately takes place through the **GMMU**, which maps GPU virtual addresses to physical addresses in VRAM or DRAM.
+---
 
-Scheduling behavior:
+## Address spaces: where things finally started making sense
+
+To understand why DMA, the IOMMU, and the GMMU all exist, I first had to stop thinking of "an address" as one universal number.
+
+A modern system can involve several address spaces:
+
+- CPU virtual addresses
+- system physical addresses
+- device-visible DMA addresses
+- GPU virtual addresses
+- VRAM locations
+
+Those addresses do not have to be numerically identical.
+
+### CPU virtual memory
+
+Normal CPU code accesses virtual addresses. The CPU MMU translates them according to the current process or kernel page tables.
+
+### DMA and the IOMMU
+
+A PCIe device performing DMA uses a device-visible DMA address. When an IOMMU is enabled, that address may be translated before reaching system RAM.
+
+The IOMMU provides isolation and prevents a device from freely accessing arbitrary system memory outside the mappings created for it.
+
+A simplified path is:
 
 ```text
-Within one channel:
-    Strict FIFO ordering
-
-Across channels:
-    Time-sliced scheduling via the runlist
+PCIe device
+      ↓
+PCIe root complex
+      ↓
+IOMMU translation, when enabled
+      ↓
+memory controller
+      ↓
+system RAM
 ```
 
----
+### GPU virtual memory and the GMMU
 
-# Linking with CUDA
+GPU engines generally operate on GPU virtual addresses. The GPU's own MMU translates those addresses according to GPU page tables and the selected memory aperture.
 
-1. `cudaMalloc()`
-
-   * Allocates memory in VRAM.
-   * Maps the allocation into the GMMU.
-   * Stores the mapping in the GMMU page tables.
-
-2. Kernel launch
-
-   * Places commands into a pushbuffer located in either VRAM or system DRAM.
-   * PFIFO eventually consumes commands from this pushbuffer through the assigned runlist channel.
-
----
-
-# Understanding Address Translation
-
-To truly understand the necessity and communication pipeline between the GPU, CPU, and memory, we must first understand addressing.
-
-### 1. Address Spaces
-
-Addressing can be thought of as the mechanism by which a device accesses memory.
-
-Each device owns its own address space, and therefore multiple addressing schemes do **not** necessarily need to be coherent.
-
----
-
-### 2. Common Address Spaces
-
-The most common address spaces in a modern system are:
-
-* Direct physical address space
-* CPU virtual address space
-* GPU virtual address space
-* IOMMU virtual address space
-
-General PCIe devices such as SATA controllers or NICs typically use either:
-
-* IOMMU-translated addresses
-* Direct physical addressing (unsafe)
-
-because they generally do not implement their own virtual memory system.
-
----
-
-### 3. Why does the IOMMU exist?
-
-The purpose of the CPU MMU and GPU GMMU is relatively obvious:
-
-* Process isolation
-* Security
-* The illusion of virtually unlimited address space
-
-The role of the IOMMU is less obvious.
-
-The IOMMU is a hardware unit located between the memory controller and the PCIe root complex.
-
-Its purpose is to ensure kernel memory safety by translating DMA addresses generated by PCIe devices before they reach system memory.
-
-The overall data path is:
+A simplified future data path, once the necessary GPU state exists, is:
 
 ```text
-CPU
- │
- ▼
-Memory Controller
- │
- ▼
-RAM
- ▲
- │
-IOMMU
- ▲
- │
-Root Complex
- ▲
- │
-PCIe Bus
- ▲
- │
-GPU
+GPU engine requests GPU virtual address X
+        ↓
+GMMU translates X
+        ↓
+mapping selects VRAM or system memory
+        ├── VRAM: handled by the GPU memory subsystem
+        └── system memory: transaction crosses PCIe
 ```
+
+This project has **not** initialized the GMMU yet. The diagram describes the machinery I am working toward, not current functionality.
 
 ---
 
-# Ideal Memory Access Flow (after GMMU initialization)
+## Coherent DMA allocation
+
+Before building GPU page tables, I experimented with Linux's DMA API:
+
+```c
+pb_cpu = dma_alloc_coherent(&dev->dev, 4096, &pb_dma, GFP_KERNEL);
+```
+
+This returns two views of the allocation:
 
 ```text
-GPU engine (PGRAPH / PFIFO) wants address X
-        │
-        ▼
-X is a GPU virtual address
-        │
-        ▼
-GMMU translates X → Physical Address P
-        │
-        ├───────────────► Is P in VRAM?
-        │
-        ├── YES
-        │       │
-        │       ▼
-        │   VRAM controller fetches data
-        │   (never leaves GPU)
-        │
-        └── NO
-                │
-                ▼
-            Address refers to system RAM
-                │
-                ▼
-           Crosses the PCIe bus
-                │
-                ▼
-      IOMMU performs DMA translation
-                │
-                ▼
-        Memory controller accesses RAM
-                │
-                ▼
-          Data returns across PCIe
+pb_cpu : kernel virtual address used by the CPU
+pb_dma : DMA address suitable for this PCI device
 ```
+
+The two values represent the same allocation from different address spaces. If an IOMMU is active, `pb_dma` does not necessarily equal the underlying system physical address.
+
+`dma_alloc_coherent()` provides a CPU/device-coherent mapping, meaning the CPU and device can observe each other's writes according to the DMA API's coherence rules without explicit streaming-DMA synchronization calls.
+
+At this stage, the buffer is only allocated and kept alive. The driver does **not** yet configure PFIFO to treat it as a valid pushbuffer.
 
 ---
 
-# Current Limitation (before GMMU)
+# P2 — making the resources actually persist
 
-For now we are limited to the following design because the GMMU has not yet been initialized.
+P1 successfully mapped BAR0, read registers, and allocated a DMA buffer—but then cleaned everything up before `probe()` returned.
+
+That was useful as a hardware-access experiment, but not as the lifetime model of a real driver. Once `probe()` succeeds, the resources belonging to the bound device must remain available until the driver is removed.
+
+P2 introduces driver-private state:
+
+```c
+struct pvt_dev {
+    void __iomem *bar0;
+    dma_addr_t pb_dma;
+    void *pb_cpu;
+};
+```
+
+After BAR0 and the coherent DMA buffer are acquired, their handles are saved:
+
+```c
+pvt->bar0 = bar0;
+pvt->pb_dma = pb_dma;
+pvt->pb_cpu = pb_cpu;
+
+pci_set_drvdata(dev, pvt);
+```
+
+`probe()` can now return successfully without destroying the state:
 
 ```text
-CPU wants to send data to GPU
-        │
-        ▼
-dma_alloc_coherent()
-        │
-        ├── CPU virtual address
-        │
-        └── DMA address
-                │
-                ▼
-CPU writes commands using the virtual address
-                │
-                ▼
-CPU tells PFIFO:
-"Pushbuffer is located at DMA address P"
-                │
-                ▼
-PFIFO places P on the PCIe bus
-                │
-                ▼
-IOMMU translates DMA address
-                │
-                ▼
-System RAM is accessed
-                │
-                ▼
-Data arrives at the GPU
+probe()
+  ├── enable device
+  ├── reserve PCI regions
+  ├── map BAR0
+  ├── allocate private state
+  ├── allocate coherent DMA memory
+  ├── attach state with pci_set_drvdata()
+  └── return 0
+
+          resources remain alive
+
+remove()
+  ├── recover state with pci_get_drvdata()
+  ├── free coherent DMA memory
+  ├── unmap BAR0
+  ├── free private state
+  ├── release PCI regions
+  └── disable device
+```
+
+This is a small change in terms of lines of code, but it is the point where the experiment starts following the lifecycle of an actual Linux PCI driver.
+
+---
+
+## Building and loading
+
+You need a Linux system with the matching kernel headers installed. The target GPU must not already be owned by another driver.
+
+Build the module from `mod_gp108`:
+
+```bash
+make
+```
+
+Load it:
+
+```bash
+sudo insmod temp_P2.ko
+```
+
+Inspect the kernel log:
+
+```bash
+sudo dmesg | tail -n 30
+```
+
+Unload it:
+
+```bash
+sudo rmmod temp_P2
+```
+
+The module filename depends on the object selected by the Makefile. For the P2 source, the Makefile should contain:
+
+```make
+obj-m += temp_P2.o
 ```
 
 ---
 
-# P2
+## Repository progression
 
-In **P1**, we performed:
+Each `Pi` section corresponds to the matching `Pi` commit so the driver can be followed as it develops:
 
-* `pci_enable_device()`
-* `pci_disable_device()`
-* `ioremap()`
-* `iounmap()`
-* BAR reservation
-* BAR release
+| Part | Main idea |
+| --- | --- |
+| P1 | Bind to GP108, map BAR0, read registers, and experiment with DMA allocation |
+| P2 | Preserve BAR0 and DMA state for the complete PCI-device lifetime |
 
-all inside the same `probe()` function (refer to the P1 version).
+Future parts will be added only as the corresponding hardware behavior is implemented and observed.
 
-However, this is not particularly useful for a real driver.
+---
 
-Any state allocated by the driver must remain valid until `remove()` is explicitly called.
+## Planned next steps
 
-Therefore, **P2** introduces **driver private data**, allowing all required mappings and data structures to persist for the lifetime of the device instead of only during the execution of `probe()`.
+- Separate raw register offsets and bit definitions from the driver logic
+- Inspect the GP108 initialization sequence in envytools/Nouveau
+- Understand the required firmware and falcon-managed engines
+- Investigate instance memory and GPU page-table formats
+- Build toward a minimal PFIFO channel and valid pushbuffer
+- Add clearer captured logs for each verified milestone
+
+The long-term goal is to understand the route from a userspace launch all the way down to GPU-visible commands—not merely to copy an initialization sequence without understanding it.
+
+---
+
+## References and acknowledgements
+
+- [envytools](https://github.com/envytools/envytools)
+- The Linux PCI driver and DMA API documentation
+- Nouveau and NVIDIA open GPU kernel-module source where applicable
+
+This README was written with AI assistance using my implementation, hardware observations, and original project notes. Any mistakes in the code or technical interpretation are still my responsibility.
+

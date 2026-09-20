@@ -16,7 +16,7 @@ understanding hardware :
 	Expansion ROM at f5000000 [disabled] [size=512K] (GPU firmware VBIOS/ UEFI GOP)
 	
 >P1 : 
-
+> Our objective here is to initialiaze our GPU at a very rudimentary level and get an overview
 The Software Stack Built:  ( PMC : power management control -> gives vendor , device id and enabled engines etc.)
 
 temp_c.ko (kernel module)
@@ -41,7 +41,7 @@ extraction pattern used for each : (raw >> lower_bit) & ((1<< width ) -1)
 	0x9400 : TIMER LOW
 	0x9410 : TIMER HIGH
 	
-	2)PFIFO(bit 8 in omc enable)
+	2)PFIFO(bit 8 in pmc enable)
 	multiple channels process multiple streams of data that are assigned by a PBDMA(push buffer DMA))(ready channels are contained by a runlist (channels are stored in GPU managed instance memory)
 	pushbuffer -> ring buffer allocated in memory or VRAM 
 	putting everything together we have a small number of PBDMAs that serve the purpose of mappping a pushbuffer(maybe any in number as they basically are pointers to virtual addresses) to channel(1:1 to pb in terms of quantity not necessarily mapping) from the runlist
@@ -55,7 +55,7 @@ extraction pattern used for each : (raw >> lower_bit) & ((1<< width ) -1)
 
 >To truly understand the necessity and the inner communication pipeline between the GPU ,CPU and memory we must understand addressing :
 :1: Addressing can be thougth of as a method for a particular device to access the memory per se unique to the address space held by a device. Hence it is not essential that multiple addressing schemes necessarily be coherent.
-:2: So what are the most obvious forms of addressing utilized by multiple components of the system :  Direct physical address spaces , CPU virtual address space , GPU virtual address space, IOMMU virtual address space (for a general PCIe device like a sATA or a NIC they would directly use IOMMU/direct physical(unsafe)addressing since they lack their own virtualizationlayer)
+:2: So what are the most obvious forms of addressing utilized by multiple components of the system :  Direct physical address spaces , CPU virtual address space , GPU virtual address space, IOMMU virtual address space (for a general PCIe device like a SATA or a NIC they would directly use IOMMU/direct physical(unsafe)addressing since they lack their own virtualizationlayer)
 :3: while reasons for having GMMU and CPU MMU may be obvious - process isolation , security , illusion of virtually inifnite space the same cant be said for the IOMMU . the IOMMU is a hardware unit between mem controller and root complex across the PCIe interconnect to ensure kernel safety which resolves the physical address and sends it to the memory controller then the DRAM.
 					
 CPU ←→ memory controller ←→ RAM
@@ -105,3 +105,192 @@ CPU ←→ memory controller ←→ RAM
 
 >In P1 we performed map/unmap , enable/disable , release/acquire  within the same probe function ( refer P1 version), but in reality this is pretty uselsss for any effective driver , all out data structures must exist till remove is explicitly called 
 >Hence comes P2 , where we overcome this limitation with the help of driver private data   
+>To initialiaze driver private structs we do : dma_set_drvdata(pci_dev device,struct s) (So we call this in our probe function)
+>To fetch the address of driver private structs we do : dma_set_drvdata(pci_dev device,struct s) (So we call this in our remove function)
+
+
+>The objective of P2 : We want the CPU to write a command into a "pushbuffer" , tell the PFIFO a command has been placed , and make sure that PFIFO consumed it(ie proof of command submission)
+
+->To implement this we require 4 key things , namely : channel descriptor (RAMFC) , pushbuffer , GMMU , runlist
+1) Pushbuffer:
+Pushbuffer is a data structure that stores GPU commands in a FIFO/ring buffer.
+>It may be stored in GPU-addressable memory (VRAM or system DRAM).
+>In our context, a NOP is just a 32-bit value at some offset in the pushbuffer.
+
+2) Channel descriptor (RAMFC):
+>Each pushbuffer is associated with a Channel.
+>It stores the GPU virtual address / FIFO information needed to access the pushbuffer.
+>GET/PUT pointers respectively indicate how far the GPU has consumed the pushbuffer and how far the CPU/producer has written commands into it.
+>Intuitively, the difference between the two (PUT - GET), accounting for ring-buffer wraparound, indicates the amount of ready-but-unconsumed GPU commands.
+>Other channel metadata includes DMA configuration, fetch state, limits, and control flags.
+
+3) GMMU:
+>The GMMU allows GPU virtual address → physical address translation with the help of page tables.
+>In our context, the driver sets up the page tables so that the pushbuffer's GPU virtual address maps to its physical backing memory.
+
+4) Runlist:
+>The runlist tells PFIFO which channels are eligible for scheduling/execution.
+>Channel IDs (or channel references, depending on the architecture) are held by the runlist.
+>A PFIFO register write notifies PFIFO that the runlist has been updated or should be reloaded, after which PFIFO can schedule the listed channels.
+
+'''text
+                    Runlist
+                       │
+                       │ physical address
+                       ▼
+              Channel Descriptor
+              (GPU-accessible memory)
+                       │
+                       │ contains GPU VA
+                       ▼
+                   Pushbuffer
+                       │
+                       │ GMMU translation
+                       ▼
+              Physical backing memory
+              ┌───────────────┐
+              │ CPU DRAM      │
+              │      OR       │
+              │ VRAM          │
+              └───────────────┘
+'''
+
+/*
+ * Copyright 2016 Red Hat Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors: Ben Skeggs
+ */
+#include "priv.h"
+#include "runl.h"
+
+#include <core/gpuobj.h>
+#include <subdev/fault.h>
+
+#include <nvif/class.h>
+
+static void
+gp100_runl_insert_chan(struct nvkm_chan *chan, struct nvkm_memory *memory, u64 offset)
+{
+	nvkm_wo32(memory, offset + 0, chan->id | chan->runq << 14);
+	nvkm_wo32(memory, offset + 4, chan->inst->addr >> 12);
+}
+
+static const struct nvkm_runl_func
+gp100_runl = {
+	.runqs = 2,
+	.size = 8,
+	.update = nv50_runl_update,
+	.insert_cgrp = gk110_runl_insert_cgrp,
+	.insert_chan = gp100_runl_insert_chan,
+	.commit = gk104_runl_commit,
+	.wait = nv50_runl_wait,
+	.pending = gk104_runl_pending,
+	.block = gk104_runl_block,
+	.allow = gk104_runl_allow,
+	.fault_clear = gk104_runl_fault_clear,
+	.preempt_pending = gf100_runl_preempt_pending,
+};
+
+static const struct nvkm_enum
+gp100_fifo_mmu_fault_engine[] = {
+	{ 0x01, "DISPLAY" },
+	{ 0x03, "IFB", NULL, NVKM_ENGINE_IFB },
+	{ 0x04, "BAR1", NULL, NVKM_SUBDEV_BAR },
+	{ 0x05, "BAR2", NULL, NVKM_SUBDEV_INSTMEM },
+	{ 0x06, "HOST0" },
+	{ 0x07, "HOST1" },
+	{ 0x08, "HOST2" },
+	{ 0x09, "HOST3" },
+	{ 0x0a, "HOST4" },
+	{ 0x0b, "HOST5" },
+	{ 0x0c, "HOST6" },
+	{ 0x0d, "HOST7" },
+	{ 0x0e, "HOST8" },
+	{ 0x0f, "HOST9" },
+	{ 0x10, "HOST10" },
+	{ 0x13, "PERF" },
+	{ 0x17, "PMU" },
+	{ 0x18, "PTP" },
+	{ 0x1f, "PHYSICAL" },
+	{}
+};
+
+static const struct nvkm_fifo_func_mmu_fault
+gp100_fifo_mmu_fault = {
+	.recover = gf100_fifo_mmu_fault_recover,
+	.access = gf100_fifo_mmu_fault_access,
+	.engine = gp100_fifo_mmu_fault_engine,
+	.reason = gk104_fifo_mmu_fault_reason,
+	.hubclient = gk104_fifo_mmu_fault_hubclient,
+	.gpcclient = gk104_fifo_mmu_fault_gpcclient,
+};
+
+static void
+gp100_fifo_intr_mmu_fault_unit(struct nvkm_fifo *fifo, int unit)
+{
+	struct nvkm_device *device = fifo->engine.subdev.device;
+	u32 inst = nvkm_rd32(device, 0x002800 + (unit * 0x10));
+	u32 valo = nvkm_rd32(device, 0x002804 + (unit * 0x10));
+	u32 vahi = nvkm_rd32(device, 0x002808 + (unit * 0x10));
+	u32 type = nvkm_rd32(device, 0x00280c + (unit * 0x10));
+	struct nvkm_fault_data info;
+
+	info.inst   =  (u64)inst << 12;
+	info.addr   = ((u64)vahi << 32) | valo;
+	info.time   = 0;
+	info.engine = unit;
+	info.valid  = 1;
+	info.gpc    = (type & 0x1f000000) >> 24;
+	info.hub    = (type & 0x00100000) >> 20;
+	info.access = (type & 0x00070000) >> 16;
+	info.client = (type & 0x00007f00) >> 8;
+	info.reason = (type & 0x0000001f);
+
+	nvkm_fifo_fault(fifo, &info);
+}
+
+static const struct nvkm_fifo_func
+gp100_fifo = {
+	.chid_nr = gm200_fifo_chid_nr,
+	.chid_ctor = gk110_fifo_chid_ctor,
+	.runq_nr = gm200_fifo_runq_nr,
+	.runl_ctor = gk104_fifo_runl_ctor,
+	.init = gk104_fifo_init,
+	.init_pbdmas = gk104_fifo_init_pbdmas,
+	.intr = gk104_fifo_intr,
+	.intr_mmu_fault_unit = gp100_fifo_intr_mmu_fault_unit,
+	.intr_ctxsw_timeout = gf100_fifo_intr_ctxsw_timeout,
+	.mmu_fault = &gp100_fifo_mmu_fault,
+	.nonstall = &gf100_fifo_nonstall,
+	.runl = &gp100_runl,
+	.runq = &gk208_runq,
+	.engn = &gk104_engn,
+	.engn_ce = &gk104_engn_ce,
+	.cgrp = {{ 0, 0, KEPLER_CHANNEL_GROUP_A  }, &gk110_cgrp, .force = true },
+	.chan = {{ 0, 0, PASCAL_CHANNEL_GPFIFO_A }, &gm107_chan },
+};
+
+int
+gp100_fifo_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+	       struct nvkm_fifo **pfifo)
+{
+	return nvkm_fifo_new_(&gp100_fifo, device, type, inst, pfifo);
+}
