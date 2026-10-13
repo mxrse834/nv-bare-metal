@@ -41,12 +41,16 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
     err = pci_request_regions(dev, "nv_probe");
     if (err) goto disable;
 
-	if(dma_set_mask_and_coherent(40))
+	if(dma_set_mask(dev,DMA_BIT_MASK(40)))
 	{
-		printk(KERN_ERR "40-bit DMA not supported\n");
+		dev_err(dev ,  "40-bit STREAMING DMA not supported\n");
 		return -ENODEV;
 	}
-	dma_set_coherent_mask(40);
+	if(dma_set_coherent_mask(dev,DMA_BIT_MASK(40)))
+	{
+		dev_err(dev , "40-bit COHERENT DMA not supported\n");
+		return -ENODEV
+	}
 	
 	
     bar0 = pci_iomap(dev, 0, 0);
