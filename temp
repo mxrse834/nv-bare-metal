@@ -1,0 +1,124 @@
+struct nvkm_device
+{
+  const struct nvkm_device_func *func;   // FUNCTION TO ALL POINTERS LETS GINORE FOR NOW
+  const struct nvkm_device_quirk *quirk; // USELSS
+  struct device *dev;                    // KERNEL THING NOT NUVO
+  enum nvkm_device_type type;            // NVKM_DEVICE_PCIE
+  u64 handle;
+  const char *name;
+  const char *cfgopt;
+  const char *dbgopt;
+
+  struct list_head head; // KERNEL thing doubly linked list
+  struct mutex mutex;    // MUTEX
+  int refcount;
+
+  void __iomem *pri;
+
+  u32 debug;
+
+  const struct nvkm_device_chip *chip;
+  /*
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_FSP     , struct nvkm_fsp     ,      fsp) //FOUNDATION SECURITY PROCESSOR (security)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_GSP     , struct nvkm_gsp     ,      gsp) //GPU System processor (firmware processor  for newer achitectures that allows offloading of work like hardware mgmt and init)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_TOP     , struct nvkm_top     ,      top) //Topology
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_VFN     , struct nvkm_vfn     ,      vfn) //Virtual Function (virtualization and partitioning)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_PCI     , struct nvkm_pci     ,      pci) //GPU specific PCI ops
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_VBIOS   , struct nvkm_bios    ,     bios) //GPU VBIOS tables and data(memory setup, display outputs, clocks, and board-specific behavior)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_DEVINIT , struct nvkm_devinit ,  devinit) //intialization using GPU VBIOS tables and data
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_PRIVRING, struct nvkm_subdev  , privring) //private register access ring subsystem on hardware
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_GPIO    , struct nvkm_gpio    ,     gpio) //General purpose IO(connected to board-level components such as sensors, power-control circuitry, or display-related hardware)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_I2C     , struct nvkm_i2c     ,      i2c) //Inter Integrated circuit (like Display Data channel on monitors)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_FUSE    , struct nvkm_fuse    ,     fuse) //identifies properties of the chip, including certain disabled features or hardware configuration choices.
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_MXM     , struct nvkm_subdev  ,      mxm) //graphicd module standard used in specific ES and laptops
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_MC      , struct nvkm_mc      ,       mc) //memory controller (interrupts , chiopset ops , etc )
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_BUS     , struct nvkm_bus     ,      bus) //internal BUS fucntionality
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_TIMER   , struct nvkm_timer   ,    timer) //GPU timer
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_INSTMEM , struct nvkm_instmem ,     imem) //Instance Memory - channels , context , engine state
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_FB      , struct nvkm_fb      ,       fb) //framebuffer/VRAM mgmt
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_LTC     , struct nvkm_ltc     ,      ltc) //L2 cache
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_MMU     , struct nvkm_mmu     ,      mmu) //MMU
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_BAR     , struct nvkm_bar     ,      bar) //Base address register mgmt(MMIO)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_FAULT   , struct nvkm_fault   ,    fault) //fault handling
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_ACR     , struct nvkm_acr     ,      acr) // Authenticated Code region (secure bootstrapping)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_PMU     , struct nvkm_pmu     ,      pmu) // power mgmt unit
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_VOLT    , struct nvkm_volt    ,     volt) // gpu voltage mgmt
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_ICCSENSE, struct nvkm_iccsense, iccsense) // current sensing not GPU instruction execution (INTEGRATED CIRCUIT CURRENT)
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_THERM   , struct nvkm_therm   ,    therm) // Thermal
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_CLK     , struct nvkm_clk     ,      clk) // clock
+NVKM_LAYOUT_INST(NVKM_SUBDEV_IOCTRL  , struct nvkm_subdev  ,   ioctrl, 3) //IO control
+NVKM_LAYOUT_ONCE(NVKM_SUBDEV_FLA     , struct nvkm_subdev  ,      fla) //Fabric linear addressing(for link nvlink when address space is shared across all GPUs)
+
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_BSP     , struct nvkm_engine  ,      bsp) //bitstream processor (video decoding engine)
+NVKM_LAYOUT_INST(NVKM_ENGINE_CE      , struct nvkm_engine  ,       ce, 20) // copy engine
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_CIPHER  , struct nvkm_engine  ,   cipher) //specialized hw decrpytion encrytion
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_DISP    , struct nvkm_disp    ,     disp) // display subsystem
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_DMAOBJ  , struct nvkm_dma     ,      dma) // direct mem access
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_FIFO    , struct nvkm_fifo    ,     fifo) // First in first out queue(for command processing ? )
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_GR      , struct nvkm_gr      ,       gr) // graphics subsystem
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_IFB     , struct nvkm_engine  ,      ifb) // Instruction fetch buffer(alogn with FIFIO past of command execution pipeline)
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_ME      , struct nvkm_engine  ,       me) // Macro Engine automates complex pipeline configuration and context switching to offload repetitive setup tasks from the CPU for both graphics and compute workloads.
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_MPEG    , struct nvkm_engine  ,     mpeg)
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_MSENC   , struct nvkm_engine  ,    msenc)
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_MSPDEC  , struct nvkm_engine  ,   mspdec)
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_MSPPP   , struct nvkm_engine  ,    msppp)
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_MSVLD   , struct nvkm_engine  ,    msvld)
+NVKM_LAYOUT_INST(NVKM_ENGINE_NVDEC   , struct nvkm_nvdec   ,    nvdec, 8) // Nvidia video decoder
+NVKM_LAYOUT_INST(NVKM_ENGINE_NVENC   , struct nvkm_nvenc   ,    nvenc, 4) // Nvidia video encoder
+NVKM_LAYOUT_INST(NVKM_ENGINE_NVJPG   , struct nvkm_engine  ,    nvjpg, 8) //
+NVKM_LAYOUT_INST(NVKM_ENGINE_OFA     , struct nvkm_engine  ,      ofa, 2)
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_SEC     , struct nvkm_engine  ,      sec) // security-related engine on applicable hardware
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_SEC2    , struct nvkm_sec2    ,     sec2) // newer
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_SW      , struct nvkm_sw      ,       sw) // software-oriented NVKM engine abstraction for certain operations and notifications
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_VIC     , struct nvkm_engine  ,      vic) // image composition and conversion
+NVKM_LAYOUT_ONCE(NVKM_ENGINE_VP      , struct nvkm_engine  ,       vp) //video-processing engine
+  */
+
+  enum
+  {
+    NV_04 = 0x04,
+    NV_10 = 0x10,
+    NV_11 = 0x11,
+    NV_20 = 0x20,
+    NV_30 = 0x30,
+    NV_40 = 0x40,
+    NV_50 = 0x50,
+    NV_C0 = 0xc0,
+    NV_E0 = 0xe0,
+    GM100 = 0x110,
+    GP100 = 0x130,
+    GV100 = 0x140,
+    TU100 = 0x160,
+    GA100 = 0x170,
+    GH100 = 0x180,
+    AD100 = 0x190,
+    GB10x = 0x1a0,
+    GB20x = 0x1b0,
+  } card_type;
+  u32 chipset;
+  u8 chiprev;
+  u32 crystal;
+
+  struct
+  {
+    struct notifier_block nb;
+  } acpi;
+
+#define NVKM_LAYOUT_ONCE(type, data, ptr) data *ptr;
+#define NVKM_LAYOUT_INST(type, data, ptr, cnt) data *ptr[cnt];
+#include <core/layout.h>
+#undef NVKM_LAYOUT_INST
+#undef NVKM_LAYOUT_ONCE
+  struct list_head subdev;
+
+  struct
+  {
+    struct list_head intr;
+    struct list_head prio[NVKM_INTR_PRIO_NR];
+    spinlock_t lock;
+    int irq;
+    bool alloc;
+    bool armed;
+    bool legacy_done;
+  } intr;
+};

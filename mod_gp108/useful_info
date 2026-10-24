@@ -1,0 +1,198 @@
+// pnglinkx @Atharvas - MacBook - Air linux % cat drivers / gpu / drm / nouveau / nvkm / subdev / mmu / gp100.c
+/*
+ * Copyright 2017 Red Hat Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+/*
+#include "mem.h"
+#include "vmm.h"
+
+#include <core/option.h>
+
+#include <nvif/class.h>
+
+static const struct nvkm_mmu_func gp100_mmu = {
+    .dma_bits = 47,
+    .mmu = {{-1, -1, NVIF_CLASS_MMU_GF100}},
+    .mem = {{-1, 0, NVIF_CLASS_MEM_GF100}, gf100_mem_new, gf100_mem_map},
+    .vmm = {{-1, 0, NVIF_CLASS_VMM_GP100}, gp100_vmm_new},
+    .kind = gm200_mmu_kind,
+    .kind_sys = true,
+};
+
+int gp100_mmu_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
+                  struct nvkm_mmu **pmmu)
+{
+    if (!nvkm_boolopt(device->cfgopt, "GP100MmuLayout", true))
+        return gm200_mmu_new(device, type, inst, pmmu);
+    return nvkm_mmu_new_(&gp100_mmu, device, type, inst, pmmu);
+}
+*/
+
+// THIS IS TEH NOUVEAU_DRM_DEVICE EQUIVALENT IT INITILAZES DRM_DEVICE WITHIN IT
+// GOTTA WRITE A SIMILAR STRUCT WHICH NVIDIA INITS
+
+// struct nouveau_drm {
+// 	struct nvkm_device *nvkm;
+// 	struct nvif_parent parent;
+// 	struct mutex client_mutex;
+// 	struct nvif_client _client;
+// 	struct nvif_device device;
+// 	struct nvif_mmu mmu;
+
+// 	struct nouveau_cli client;
+// 	struct drm_device *dev;
+
+// 	struct list_head clients;
+
+// 	/**
+// 	 * @clients_lock: Protects access to the @clients list of &struct nouveau_cli.
+// 	 */
+
+// 	struct mutex clients_lock;
+
+// 	u8 old_pm_cap;
+
+// 	struct {
+// 		struct agp_bridge_data *bridge;
+// 		u32 base;
+// 		u32 size;
+// 		bool cma;
+// 	} agp;
+
+// 	/* TTM interface support */
+// 	struct {
+// 		struct ttm_device bdev;
+// 		atomic_t validate_sequence;
+// 		int (*move)(struct nouveau_channel *,
+// 			    struct ttm_buffer_object *,
+// 			    struct ttm_resource *, struct ttm_resource *);
+// 		struct nouveau_channel *chan;
+// 		struct nvif_object copy;
+// 		int mtrr;
+// 		int type_vram;
+// 		int type_host[2];
+// 		int type_ncoh[2];
+// 		struct mutex io_reserve_mutex;
+// 		struct list_head io_reserve_lru;
+// 	} ttm;
+
+// 	/* GEM interface support */
+// 	struct {
+// 		u64 vram_available;
+// 		u64 gart_available;
+// 	} gem;
+
+// 	/* synchronisation */
+// 	void *fence;
+
+// 	/* Global channel management. */
+// 	int chan_total; /* Number of channels across all runlists. */
+// 	int chan_nr;	/* 0 if per-runlist CHIDs. */
+// 	int runl_nr;
+// 	struct {
+// 		int chan_nr;
+// 		int chan_id_base;
+// 		u64 context_base;
+// 	} *runl;
+
+// 	/* Workqueue used for channel schedulers. */
+// 	struct workqueue_struct *sched_wq;
+
+// 	/* context for accelerated drm-internal operations */
+// 	struct nouveau_channel *cechan;
+// 	struct nouveau_channel *channel;
+// 	struct nvkm_gpuobj *notify;
+// 	struct nvif_object ntfy;
+
+// 	/* nv10-nv40 tiling regions */
+// 	struct {
+// 		struct nouveau_drm_tile reg[15];
+// 		spinlock_t lock;
+// 	} tile;
+
+// 	/* modesetting */
+// 	struct nvbios vbios;
+// 	struct nouveau_display *display;
+// 	bool headless;
+// 	struct work_struct hpd_work;
+// 	spinlock_t hpd_lock;
+// 	u32 hpd_pending;
+// #ifdef CONFIG_ACPI
+// 	struct notifier_block acpi_nb;
+// #endif
+
+// 	/* power management */
+// 	struct nouveau_hwmon *hwmon;
+// 	struct nouveau_debugfs *debugfs;
+
+// 	/* led management */
+// 	struct nouveau_led *led;
+
+// 	struct dev_pm_domain vga_pm_domain;
+
+// 	struct nouveau_svm *svm;
+
+// 	struct nouveau_dmem *dmem;
+
+// 	struct {
+// 		struct drm_audio_component *component;
+// 		struct mutex lock;
+// 		bool component_registered;
+// 	} audio;
+// };
+
+// */
+
+static int mygpu_probe(struct pci_dev *pdev,
+                       const struct pci_device_id *id)
+{
+    struct drm_device *drm;
+    int ret;
+
+    ret = pci_enable_device(pdev);
+    if (ret)
+        return ret;
+
+    /* Claim/map BARs and initialize hardware here. */
+
+    drm = drm_dev_alloc(&my_drm_driver, &pdev->dev);
+    if (IS_ERR(drm))
+    {
+        ret = PTR_ERR(drm);
+        goto err_disable;
+    }
+
+    /* Initialize required DRM and GPU subsystems here. */
+
+    ret = drm_dev_register(drm, 0);
+    if (ret)
+        goto err_put_drm;
+
+    return 0;
+
+err_put_drm:
+    drm_dev_put(drm);
+err_disable:
+    pci_disable_device(pdev);
+    return ret;
+}
+
+*/

@@ -1,0 +1,155 @@
+###ENGINE TO GET WORKING
+
+PCI and DEVINIT — how the device is discovered and initialized.
+
+MC and FB — memory-controller and VRAM setup.
+
+INSTMEM and MMU — GPU objects and address translation.
+
+FIFO and CE — command submission and copy operations.
+
+GR — the graphics/compute execution hardware and its initialization.
+
+
+## THE ARCHTECTURAL ARCHITECTURE :
+
+
+### User-Space Layer: The Mesa 3D Subsystem
+
+Applications (like a video game or a web browser) never talk directly to the Linux kernel. They talk to Mesa, which implements the open graphics APIs.
+
+• The Compiler & State Tracker:
+	• Gallium3D: Nouveau relies on the Gallium3D architecture inside Mesa. It tracks the state of the application (textures, blends, viewports) and converts API commands into an internal intermediate language called NIR.
+	• Codegen (The Machine Translator): Mesa includes the specific machine-code generators for different NVIDIA generations (e.g., nv50 for older cards, nvc0 for Fermi/Kepler, and the modern NVK driver for Vulkan). It compiles NIR into the exact binary instructions the NVIDIA chip requires.
+• The Bridge (libdrm_nouveau):
+	• Once Mesa has the compiled shader binaries and draw commands ready, it passes them to libdrm_nouveau. This lightweight helper library wraps the raw Linux system calls (ioctl), formatting the data so the kernel can ingest it.
+
+### Kernel-Space Layer: DRM (Direct Rendering Manager)
+
+The kernel side of Nouveau lives inside the Linux kernel source tree under drivers/gpu/drm/nouveau/. It exposes standard Unix file nodes (like /dev/dri/card0) that user space can write to.
+• Memory Management via GEM & TTM:
+	• GEM (Graphics Execution Manager): Nouveau uses GEM to provide a clean interface for allocating and naming memory buffers (textures, vertex data) requested by Mesa.
+	• TTM (Translation Table Manager): Because dedicated VRAM management is incredibly complex, Nouveau relies on the kernel's TTM subsystem. TTM acts as the "bouncer"—if VRAM fills up, TTM automatically evicts older textures out into system RAM, swapping them back when the GPU needs them.
+
+### Execution Pipeline: How a Frame Travels Through Nouveau
+
+When a game tells Nouveau to render a single frame, the data flows downward through these exact steps:
+1. API Call: A game invokes a Vulkan draw call.
+2. Mesa/NVK Translation: The User-Space NVK compiler transforms the shader into NVIDIA-compatible machine binary.
+3. Pushbuf Packaging: Mesa allocates a "Graphics Buffer Object" (BO) via GEM and writes the binary code and drawing commands into a command ring buffer called a Pushbuf.
+4. Kernel IOCTL: libdrm_nouveau triggers a system call (ioctl(..., DRM_IOCTL_NOUVEAU_GEM_PUSHBUF, ...)) to transition control to the kernel.
+5. FIFO Ringing: The kernel driver validates the memory addresses and passes the pointer to the GPU's hardware FIFO engine via direct register writes (MMIO).
+6. Hardware Execution: The GPU's internal command processor fetches the commands, executes the draw call across its parallel cores, and writes the resulting pixels to the designated Framebuffer in VRAM.
+
+### Display, Mode-Setting & Power (KMS)
+
+• KMS (Kernel Mode-Setting): Nouveau implements KMS (nouveau_display.c) to talk directly to the GPU's display engine. It handles monitor detection (EDID reading via I2C), sets up resolution/refresh rates, and flips the compiled framebuffers to the screen at the right millisecond to avoid tearing.
+• The Reclocking Battle: A notorious real-world quirk of Nouveau is power management. On older cards, the driver manually adjusts the clock speeds (voltages). However, on modern NVIDIA cards (Maxwell and newer), the hardware requires digitally signed firmware from NVIDIA to boost clocks. Without it, Nouveau is forced to run the GPU at its slowest boot speeds, which is why open-source gaming performance historically lagged behind the proprietary driver.
+
+### Architectural Modernization (The GSP Shift & Nova)
+
+The landscape of the Nouveau project has fundamentally shifted due to changes in NVIDIA's hardware architecture:
+• GSP (GPU System Processor): On newer GPU generations (Turing, Ampere, Ada Lovelace, Blackwell), NVIDIA offloads complex kernel driver logic—like power management, reclocking, and initialization—to an on-chip, embedded RISC-V co-processor running proprietary firmware.
+• The RPC Interface: Consequently, the modern Nouveau kernel driver acts less like a low-level register tweaker and more like a messenger. It uses a message queue system to send Remote Procedure Calls (RPCs) to the GSP firmware, asking it to perform the low-level hardware orchestration.
+• The Next Generation (Nova): Because GSP handles the heavily protected IP, developers are building a spiritual successor to Nouveau's kernel module called Nova. Written entirely in Rust, Nova targets modern GSP-reliant cards to maximize memory safety and stability while leaving older, legacy cards to the classic C-based Nouveau driver.
+
+
+###### OBJECTIVE:
+To get a purely compute based driver working , we may init display 
+
+
+
+1. The Custom User-Space Runtime API (Your "CUDA" Frontend)
+
+Instead of relying on an established standard, you must design a minimal C/C++ API library (e.g., libmycuda.so) that applications link against.
+• Memory Operations Engine:
+	• Exposes user functions like myCudaMalloc(void** devPtr, size_t size) and myCudaMemcpy().
+	• It acts as a memory virtualizer, translating user requests into raw memory handles before requesting allocations from the kernel driver.
+• Execution Grid Planner:
+	• Defines structural configurations for 3D execution grids (Blocks and Threads) similar to the <<<blocks, threads>>> syntax.
+	• It packs block size, grid dimensions, and device argument arrays into serialized payload execution descriptors.
+
+2. The Custom Pascal ISA Compiler (The "NVCC" Equivalent)
+
+A CUDA-like toolchain requires a way to turn human-readable code into raw GPU machine instructions. Since NVIDIA's exact Pascal hardware Instruction Set Architecture (ISA) is proprietary, you must build an assembler.
+• Targeting the Microarchitecture (sm_61):
+	• The compiler must generate machine code optimized for Pascal's Streaming Multiprocessor (SM) layout.
+	• It must implement a SIMT (Single Instruction, Multiple Threads) execution model, grouping thread execution into 32-lane hardware warps.
+• Building a Custom Assembler Toolchain:
+	• Option A (Frontend): Build an LLVM compiler backend that parses C++ code and emits text-based assembly representing Pascal instructions.
+	• Option B (The Direct Path): Create a standalone assembler that reads a custom, human-readable intermediate assembly language you design and outputs binary machine code (.cubin equivalent).
+	• Warp Management: The compiler must handle register tracking and predicate registers (conditional execution per lane) so the GP108's parallel threads don't diverge catastrophically during branches.
+
+3. The Custom Kernel-Space Driver (The Back-End)
+
+Your kernel module interacts directly with the physical PCIe bus mapping for the GP108. It acts entirely as a headless memory manager and scheduler.
+• MMIO Space Setup: Maps the GP108's Memory-Mapped I/O (MMIO) registers into the kernel address space. This gives your driver direct access to write to hardware registers controlling the execution engines.
+• GPU Memory Management Unit (MMU) Configuration:
+	• Configures page tables on the GP108.
+	• Translates CPU virtual addresses to actual physical VRAM locations.
+	• Allocates high-speed VRAM pools for execution memory and structures system memory page arrays for Host-to-Device data copying.
+• Falcon Firmware Control:
+	• The Pascal Hard Limit: Pascal GPUs require cryptographically signed firmware from NVIDIA to initialize the internal secure engines and handle clock scaling.
+	• Your kernel driver must extract and load these official signed firmware blobs into the GPU's internal Falcon microcontrollers during boot. Without this, the chip will stay locked in a low-power mode or refuse to process execution queues.
+
+4. Hardware Ring Submission & Synchronization
+
+This layer handles the execution sequence, passing your custom compiled binary directly to the GP108's internal processing queues.
+• Pushbuffer Generation: The runtime library builds an array of data packets containing execution commands:
+	1. Instructions to set up the execution grid size.
+	2. The exact pointers to your input/output arrays in memory.
+	3. The compiled binary machine code blocks.
+• FIFO Engine Kickoff: The kernel driver assigns a hardware channel to the application and writes the memory address of your compiled payload directly to the GP108's hardware FIFO doorbell register.
+• Fence-Driven Completion Tracking: Because the GPU runs asynchronously, the driver writes a specific marker ("Hardware Fence") to a targeted memory address. The host CPU enters a wait state, waking up via a hardware interrupt only when the GPU updates the fence, proving execution has finished.
+
+Custom Stack Components:
+
+### Compute Pipeline Comparison
+
+### Custom Stack Components
+
+| Custom Layer Component | Equivalent in Official NVIDIA Stack | Primary Objective |
+| :--- | :--- | :--- |
+| **`libmycuda.so` API** | `libcuda.so` / `libcudart.so` | Handles memory mapping controls, execution context states, and tracking grid configurations. |
+| **Custom Backend Compiler** | `nvcc` / `ptxas` | Translates C++ compute functions into raw `sm_61` binary machine code structured for 32-lane warps. |
+| **`/dev/mygpu` Kernel Node** | `nvidia.ko` / `nvidia-uvm.ko` | Directs low-level page allocation, registers virtual memory spaces, and monitors physical PCIe interrupts. |
+| **Falcon Interface Routine** | GSP / Secure Boot Engine | Loads signed hardware firmware blobs onto the GP108 to safely unlock full computing clocks. |
+| **FIFO Pushbuffer Builder** | Hardware Command Subsystem | Formats instruction payloads and rings hardware doorbells to run parallel execution passes. |
+
+
+flowchart TD
+    A[PCI probe and BAR0 mapping] --> B[GPU identification]
+    B --> C[Framebuffer and memory controller init]
+    C --> D[VRAM discovery and allocator]
+    D --> E[GPU MMU and page tables]
+    E --> F[Expose system RAM and VRAM allocation APIs]
+
+THE NOUVEAU SOURCE CALLCHAIN:
+
+nv138_chipset (GP108)
+    |
+    +--> gp102_fb_new()
+    |       |
+    |       +--> gp102_fb_vidmem_size()
+    |       |       |
+    |       |       +--> Read/decode VRAM size
+    |       |
+    |       +--> gp102_ram_new()
+    |               |
+    |               +--> RAM object + VRAM allocator
+    |               +--> RAM initialization dependencies
+    |
+    +--> gp100_mc_new()
+    |       |
+    |       +--> Memory-controller initialization
+    |
+    +--> gp100_mmu_new()
+            |
+            +--> MMU object construction
+            +--> GPU virtual-memory machinery
+
+
+HOW DO WE GET THIS DRIVER WORKING ?
+
+APPEND TEH PCI INIT , DMA MASK PART, PROBE FUNCTION , pvtstruct , module init
+
