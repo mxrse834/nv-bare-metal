@@ -1,0 +1,28 @@
+// OLD CODE
+// p0 = ioread32(bar0);
+// p1 = ioread32(bar0 + 0x200);
+// p2 = ioread32(bar0 + 0x100);
+// p3 = ioread32(bar0 + 0xa00);
+// iowrite32((1 << 16) | (1 << 8) | p1, bar0 + 0x200);
+// pfifo_intr = ioread32(bar0 + 0x2100);
+// p1 = ioread32(bar0 + 0x200);
+// printk(KERN_INFO "nv_probe: PMC_ID = 0x%08x\n", p0);
+// printk(KERN_INFO "nv_probe: PMC_ENABLE = 0x%08x\n", p1);
+// printk(KERN_INFO "nv_probe: PFIFO_INTR = 0x%08x\n", pfifo_intr);
+// printk(KERN_INFO "nv_probe: INTR_HOST = 0x%08x\n", p2);
+// printk(KERN_INFO "nv_probe: PMC_NEW_ID = 0x%08x\n", p3);
+// printk(KERN_INFO "nv_probe: TIMER_LOW = 0x%08x\n", ioread32(bar0 + 0x9400));
+// printk(KERN_INFO "nv_probe: TIMER_LOW = 0x%08x\n", ioread32(bar0 + 0x9400));
+
+/*
+[ 6269.538829] nv_probe: TIMER_LOW = 0xcef45540
+[ 6269.538832] nv_probe: TIMER_LOW = 0xcef45de0
+[ 6289.065425] nv_probe: removed
+[ 6290.797139] nv_probe: PMC_ID = 0x138000a1
+[ 6290.797143] nv_probe: PMC_ENABLE = 0x40002020
+[ 6290.797144] nv_probe: INTR_HOST = 0x00000000
+[ 6290.797145] nv_probe: PMC_NEW_ID = 0x138a1000
+[ 6290.797147] nv_probe: TIMER_LOW = 0x617a7a00
+[ 6290.797150] nv_probe: TIMER_LOW = 0x617a8280
+[ 6290.797152] nv_probe: Allocated DMA buffer address 0000000051645bd8, CPU virtual address 0x1241000
+*/

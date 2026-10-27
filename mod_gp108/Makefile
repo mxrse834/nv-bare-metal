@@ -1,4 +1,4 @@
-obj-m += temp_P2.o
+obj-m += temp_P3.o
 
 kdir := /lib/modules/$(shell uname -r)/build
 pwd := $(shell pwd)

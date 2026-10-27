@@ -1,0 +1,1 @@
+savedcmd_temp_P3.ko := ld -r -m elf_x86_64 -z noexecstack --no-warn-rwx-segments --build-id=sha1  -T /usr/lib/modules/6.18.56-1-lts/build/scripts/module.lds -o temp_P3.ko temp_P3.o temp_P3.mod.o .module-common.o

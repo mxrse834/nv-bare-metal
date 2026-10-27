@@ -5,6 +5,8 @@
 #include <linux/io.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/fs.h>
 
 /*
 HOLY GRAIL
@@ -80,6 +82,26 @@ static struct pci_driver my_driver = {
     .remove = remove,
 };
 
+static const struct file_operations gp108_fops{
+
+};
+
+void nv_smi(struct gp108_dev gp108)
+{
+    /// GPU_INFO_OUPUT
+    u32 pmc_id;
+    // u32 pmc_id_new;
+    pmc_id = readl(gp108->bar0 + 0x0000); //[ 3250.696994] 0x138000a1
+    // pmc_id_new = readl(gp108->bar0 + 0x0a00);
+    u8 gpu_id = (pmc_id >> 20);
+    u8 revision = (pmc_id) & 0xff;
+
+    dev_info(&gp108->pdev->dev, "GPU_INFO");
+    dev_info(&gp108->pdev->dev, "0x%08x", pmc_id);
+    dev_info(&gp108->pdev->dev, "0x%02x", gpu_id);
+    dev_info(&gp108->pdev->dev, "0x%02x", revision);
+}
+
 static int probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
     int err;
@@ -88,7 +110,7 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
     if (!gp108)
     {
         err = -ENOMEM;
-        goto free_struct;
+        goto struct_free;
     }
     gp108->pdev = dev;
     // u32 p0, p1, p2, p3, pfifo_intr;
@@ -130,27 +152,11 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
         goto release;
     }
 
-    // p0 = ioread32(bar0);
-    // p1 = ioread32(bar0 + 0x200);
-    // p2 = ioread32(bar0 + 0x100);
-    // p3 = ioread32(bar0 + 0xa00);
-    // iowrite32((1 << 16) | (1 << 8) | p1, bar0 + 0x200);
-    // pfifo_intr = ioread32(bar0 + 0x2100);
-    // p1 = ioread32(bar0 + 0x200);
-    // printk(KERN_INFO "nv_probe: PMC_ID = 0x%08x\n", p0);
-    // printk(KERN_INFO "nv_probe: PMC_ENABLE = 0x%08x\n", p1);
-    // printk(KERN_INFO "nv_probe: PFIFO_INTR = 0x%08x\n", pfifo_intr);
-    // printk(KERN_INFO "nv_probe: INTR_HOST = 0x%08x\n", p2);
-    // printk(KERN_INFO "nv_probe: PMC_NEW_ID = 0x%08x\n", p3);
-    // printk(KERN_INFO "nv_probe: TIMER_LOW = 0x%08x\n", ioread32(bar0 + 0x9400));
-    // printk(KERN_INFO "nv_probe: TIMER_LOW = 0x%08x\n", ioread32(bar0 + 0x9400));
-
     // pb_dma holds the physical device address of the allocated buffer may or may not be the direct physical address of the buffer, depending on the architecture and memory management(IOMMU).
     // while pb_cpu holds the virtual address that can be used by the CPU to access the buffer.
     // The dma_alloc_coherent function ensures that the allocated memory is suitable for DMA operations, meaning it is contiguous in physical memory and not cached, which is important for device drivers that perform direct memory access.
 
-    // saving state
-
+    // SAVING STATE
     gp108->pb_cpu = dma_alloc_coherent(&gp108->pdev->dev, 4096, &gp108->pb_dma, GFP_KERNEL);
     if (!gp108->pb_cpu)
     {
@@ -162,24 +168,13 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
     pci_set_drvdata(gp108->pdev, gp108);
 
     return 0;
-    /*
-[ 6269.538829] nv_probe: TIMER_LOW = 0xcef45540
-[ 6269.538832] nv_probe: TIMER_LOW = 0xcef45de0
-[ 6289.065425] nv_probe: removed
-[ 6290.797139] nv_probe: PMC_ID = 0x138000a1
-[ 6290.797143] nv_probe: PMC_ENABLE = 0x40002020
-[ 6290.797144] nv_probe: INTR_HOST = 0x00000000
-[ 6290.797145] nv_probe: PMC_NEW_ID = 0x138a1000
-[ 6290.797147] nv_probe: TIMER_LOW = 0x617a7a00
-[ 6290.797150] nv_probe: TIMER_LOW = 0x617a8280
-[ 6290.797152] nv_probe: Allocated DMA buffer address 0000000051645bd8, CPU virtual address 0x1241000
-    */
+
 free_mem:
     dma_free_coherent(&gp108->pdev->dev, 4096, gp108->pb_cpu, gp108->pb_dma);
 unmap:
     pci_iounmap(gp108->pdev, gp108->bar0);
 release:
-    pci_release_regions(&gp108->pdev);
+    pci_release_regions(gp108->pdev);
 disable:
     pci_clear_master(gp108->pdev);
     pci_disable_device(gp108->pdev);
@@ -191,7 +186,7 @@ struct_free:
 static void remove(struct pci_dev *dev)
 {
     struct gp108_dev *pvt = pci_get_drvdata(dev);
-    dma_free_coherent(&gp108->pdev->dev, 4096, gp108->pb_cpu, gp108->pb_dma);
+    dma_free_coherent(&pvt->pdev->dev, 4096, pvt->pb_cpu, pvt->pb_dma);
     pci_iounmap(dev, pvt->bar0);
     kfree(pvt);
     pci_release_regions(pvt->pdev);
