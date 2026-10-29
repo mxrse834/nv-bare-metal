@@ -1,9 +1,13 @@
 #ifndef GP108_IOCTL
 #define GP108_IOCTL
 
-#include <ioctl.h>
-#include <types.h>
-
+#ifdef __KERNEL__
+#include <linux/ioctl.h>
+#include <linux/types.h>
+#else
+#include <linux/types.h>
+#include <sys/ioctl.h>
+#endif
 struct gp108_info
 {
     __u32 vendor;

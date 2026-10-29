@@ -7,7 +7,7 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/fs.h>
-#include <miscdevice.h>
+#include <linux/miscdevice.h>
 #include "gp108_info_header.h"
 
 /*
@@ -69,7 +69,7 @@ struct gp108_dev
     resource_size_t bar0_len;
     resource_size_t bar0_start;
 
-    miscdevice miscdev;
+    struct miscdevice miscdev;
     dma_addr_t pb_dma;
     void *pb_cpu;
 };
@@ -124,7 +124,7 @@ static long gp108_gpu_info(struct file *file, unsigned int cmd, unsigned long ar
     return 0;
 }
 
-static const struct file_operations gp108_fops{
+static const struct file_operations gp108_fops = {
     .owner = THIS_MODULE,
     .open = gp108_open,
     .unlocked_ioctl = gp108_gpu_info,
@@ -180,11 +180,20 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
         goto release;
     }
 
+    // MISC SETUP INIT
+    gp108->miscdev.minor = MISC_DYNAMIC_MINOR;
+    gp108->miscdev.name = "gp108";
+    gp108->miscdev.fops = &gp108_fops;
+    gp108->miscdev.parent = &gp108->pdev->dev;
+    if (misc_register(&gp108->miscdev))
+    {
+        printk(KERN_ERR "Unable to register MISCDEVICE\n");
+    }
+
+    // SAVING STATE
     // pb_dma holds the physical device address of the allocated buffer may or may not be the direct physical address of the buffer, depending on the architecture and memory management(IOMMU).
     // while pb_cpu holds the virtual address that can be used by the CPU to access the buffer.
     // The dma_alloc_coherent function ensures that the allocated memory is suitable for DMA operations, meaning it is contiguous in physical memory and not cached, which is important for device drivers that perform direct memory access.
-
-    // SAVING STATE
     gp108->pb_cpu = dma_alloc_coherent(&gp108->pdev->dev, 4096, &gp108->pb_dma, GFP_KERNEL);
     if (!gp108->pb_cpu)
     {

@@ -1291,6 +1291,9 @@ deps_temp_P3.o := \
     $(wildcard include/config/DMA_API_DEBUG) \
     $(wildcard include/config/NEED_DMA_MAP_STATE) \
   /usr/lib/modules/6.18.56-1-lts/build/include/linux/dma-direction.h \
+  /usr/lib/modules/6.18.56-1-lts/build/include/linux/miscdevice.h \
+  /usr/lib/modules/6.18.56-1-lts/build/include/uapi/linux/major.h \
+  gp108_info_header.h \
 
 temp_P3.o: $(deps_temp_P3.o)
 
