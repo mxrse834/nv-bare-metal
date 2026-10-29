@@ -7,6 +7,8 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/fs.h>
+#include <miscdevice.h>
+#include "gp108_info_header.h"
 
 /*
 HOLY GRAIL
@@ -67,6 +69,7 @@ struct gp108_dev
     resource_size_t bar0_len;
     resource_size_t bar0_start;
 
+    miscdevice miscdev;
     dma_addr_t pb_dma;
     void *pb_cpu;
 };
@@ -82,25 +85,50 @@ static struct pci_driver my_driver = {
     .remove = remove,
 };
 
-static const struct file_operations gp108_fops{
-
-};
-
-void nv_smi(struct gp108_dev gp108)
+static int gp108_open(struct inode *inode, struct file *file)
 {
+    struct miscdevice *miscdev = file->private_data;
+    struct gp108_dev *gp108;
+    gp108 = container_of(miscdev, struct gp108_dev, miscdev);
+    file->private_data = gp108;
+    return 0;
+}
+
+static long gp108_gpu_info(struct file *file, unsigned int cmd, unsigned long arg)
+{
+    if (cmd != GPU_INFO)
+    {
+        return -ENOTTY;
+    }
     /// GPU_INFO_OUPUT
     u32 pmc_id;
-    // u32 pmc_id_new;
+    struct gp108_dev *gp108;
+    struct gp108_info gp108_info = {};
+    gp108 = file->private_data;
+
     pmc_id = readl(gp108->bar0 + 0x0000); //[ 3250.696994] 0x138000a1
-    // pmc_id_new = readl(gp108->bar0 + 0x0a00);
+
     u8 gpu_id = (pmc_id >> 20);
     u8 revision = (pmc_id) & 0xff;
 
-    dev_info(&gp108->pdev->dev, "GPU_INFO");
-    dev_info(&gp108->pdev->dev, "0x%08x", pmc_id);
-    dev_info(&gp108->pdev->dev, "0x%02x", gpu_id);
-    dev_info(&gp108->pdev->dev, "0x%02x", revision);
+    gp108_info.device = gp108->pdev->device;
+    gp108_info.gpu_id = gpu_id;
+    gp108_info.revision = revision;
+    gp108_info.vendor = gp108->pdev->vendor;
+
+    if (copy_to_user((void __user *)arg, &gp108_info, sizeof(gp108_info)))
+    {
+        return -EFAULT;
+    }
+
+    return 0;
 }
+
+static const struct file_operations gp108_fops{
+    .owner = THIS_MODULE,
+    .open = gp108_open,
+    .unlocked_ioctl = gp108_gpu_info,
+};
 
 static int probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
