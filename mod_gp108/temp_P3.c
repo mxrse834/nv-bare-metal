@@ -94,6 +94,8 @@ static int gp108_open(struct inode *inode, struct file *file)
     return 0;
 }
 
+static long gpu_read_reg
+
 static long gp108_gpu_info(struct file *file, unsigned int cmd, unsigned long arg)
 {
     if (cmd != GPU_INFO)
@@ -132,6 +134,8 @@ static const struct file_operations gp108_fops = {
 
 static int probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
+    pr_err("nv_probe: ENTER probe for %s\n", pci_name(dev));
+
     int err;
 
     struct gp108_dev *gp108 = kzalloc(sizeof(struct gp108_dev), GFP_KERNEL);
@@ -140,12 +144,14 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
         err = -ENOMEM;
         goto struct_free;
     }
+    printk(KERN_ERR"s1");
     gp108->pdev = dev;
     // u32 p0, p1, p2, p3, pfifo_intr;
 
     err = pci_enable_device(gp108->pdev);
     if (err)
         goto disable;
+    printk(KERN_ERR"s2");
 
     pci_set_master(gp108->pdev);
 
@@ -169,6 +175,8 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
             goto release;
         }
     }
+        printk(KERN_ERR"s3");
+
 
     /// MMIO
     gp108->bar0_start = pci_resource_start(gp108->pdev, 0); // pass 0 as offset for BAR0
@@ -179,16 +187,7 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
         err = -ENOMEM;
         goto release;
     }
-
-    // MISC SETUP INIT
-    gp108->miscdev.minor = MISC_DYNAMIC_MINOR;
-    gp108->miscdev.name = "gp108";
-    gp108->miscdev.fops = &gp108_fops;
-    gp108->miscdev.parent = &gp108->pdev->dev;
-    if (misc_register(&gp108->miscdev))
-    {
-        printk(KERN_ERR "Unable to register MISCDEVICE\n");
-    }
+        printk(KERN_ERR"s4");
 
     // SAVING STATE
     // pb_dma holds the physical device address of the allocated buffer may or may not be the direct physical address of the buffer, depending on the architecture and memory management(IOMMU).
@@ -199,11 +198,23 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
     {
         printk(KERN_ERR "nv_probe: dma_alloc_coherent failed\n");
         err = -ENOMEM;
-        goto free_mem;
+        goto unmap;
     }
     printk(KERN_INFO "nv_probe: DMA address 0x%llx, CPU virtual %p\n", gp108->pb_dma, gp108->pb_cpu);
-    pci_set_drvdata(gp108->pdev, gp108);
 
+    // MISC SETUP INIT
+    gp108->miscdev.minor = MISC_DYNAMIC_MINOR;
+    gp108->miscdev.name = "gp108";
+    gp108->miscdev.fops = &gp108_fops;
+    gp108->miscdev.parent = &gp108->pdev->dev;
+    err = misc_register(&gp108->miscdev);
+    if(err)
+    {
+        dev_err(gp108->pdev,"Unable to register MISCDEVICE\n");
+        goto free_mem;
+    }
+
+    pci_set_drvdata(gp108->pdev, gp108);
     return 0;
 
 free_mem:
@@ -223,11 +234,13 @@ struct_free:
 static void remove(struct pci_dev *dev)
 {
     struct gp108_dev *pvt = pci_get_drvdata(dev);
+    misc_deregister(&pvt->miscdev);
     dma_free_coherent(&pvt->pdev->dev, 4096, pvt->pb_cpu, pvt->pb_dma);
     pci_iounmap(dev, pvt->bar0);
-    kfree(pvt);
     pci_release_regions(pvt->pdev);
+    pci_clear_master(pvt->pdev); 
     pci_disable_device(pvt->pdev);
+    kfree(pvt);
     printk(KERN_INFO "nv_probe: removed\n");
 }
 

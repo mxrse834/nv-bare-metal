@@ -7,6 +7,6 @@ out := $(src)/build
 .PHONY: all clean
 
 all : 
-	$(MAKE) -C $(kdir) M=$(pwd) MO=$(out) modules
+	$(MAKE) -C $(kdir) M=$(src) MO=$(out) modules
 clean:
-	$(MAKE) -C $(kdir) M=$(pwd) MO=$(out) clean
+	$(MAKE) -C $(kdir) M=$(src) MO=$(out) clean

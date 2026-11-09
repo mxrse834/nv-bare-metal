@@ -16,6 +16,13 @@ struct gp108_info
     __u32 revision;
 };
 
-#define GPU_INFO _IOR('G', 0x00, struct gp108_info)
+struct bar0_addr
+{
+    __u64 offset;
+    __u64 value;
+};
+
+#define GPU_INFO _IOR('G', 0x00, struct gp108_info);
+#define gpu_reg_read _IOR('G',0x01, struct bar0_addr);
 
 #endif

@@ -1,1 +1,1 @@
-savedcmd_Module.symvers :=  /usr/lib/modules/6.18.56-1-lts/build/scripts/mod/modpost -M    -a    -N  -o Module.symvers -n -T modules.order -i /usr/lib/modules/6.18.56-1-lts/build/Module.symvers -e 
+savedcmd_/home/pnglinkpc/nv-bare-metal/mod_gp108/Module.symvers :=  scripts/mod/modpost -M -m       -o /home/pnglinkpc/nv-bare-metal/mod_gp108/Module.symvers -n -T /home/pnglinkpc/nv-bare-metal/mod_gp108/modules.order -i Module.symvers -e 

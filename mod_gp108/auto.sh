@@ -5,7 +5,7 @@ echo "Removing..."
 sudo rmmod temp_P3
 
 echo "Building..."
-make
+sudo make
 
 echo "Loading..."
 sudo insmod temp_P3.ko
