@@ -1,0 +1,76 @@
+   0.005657458s  INFO prepare_target{force=false package_id=gp108_api v0.1.0 (/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api) target="gp108_api"}: cargo::core::compiler::fingerprint: fingerprint error for gp108_api v0.1.0 (/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api)/Check { test: false }/TargetInner { name: "gp108_api", doc: true, ..: with_path("/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api/src/main.rs", Edition2024) }
+   0.005696917s  INFO prepare_target{force=false package_id=gp108_api v0.1.0 (/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api) target="gp108_api"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api/target/debug/.fingerprint/gp108_api-131914bdb0dfc3fe/bin-gp108_api`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.011451750s  INFO prepare_target{force=false package_id=libc v0.2.191 target="libc"}: cargo::core::compiler::fingerprint: fingerprint error for libc v0.2.191/Check { test: false }/TargetInner { ..: lib_target("libc", ["lib"], "/Users/pnglinkx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libc-0.2.191/src/lib.rs", Edition2021) }
+   0.011470583s  INFO prepare_target{force=false package_id=libc v0.2.191 target="libc"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api/target/debug/.fingerprint/libc-71b505542e7cc695/lib-libc`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.012277833s  INFO prepare_target{force=false package_id=gp108_api v0.1.0 (/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api) target="gp108_api"}: cargo::core::compiler::fingerprint: fingerprint error for gp108_api v0.1.0 (/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api)/Check { test: true }/TargetInner { name: "gp108_api", doc: true, ..: with_path("/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api/src/main.rs", Edition2024) }
+   0.012282875s  INFO prepare_target{force=false package_id=gp108_api v0.1.0 (/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api) target="gp108_api"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api/target/debug/.fingerprint/gp108_api-e65b65feb7260214/test-bin-gp108_api`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+    Checking libc v0.2.191
+    Checking gp108_api v0.1.0 (/Users/pnglinkx/nv-bare-metal/mod_gp108/gp108_api)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.37s

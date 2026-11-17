@@ -17,8 +17,6 @@ int main()
     int ret = 0;
     if ((ret = ioctl(fd, GPU_INFO, &gpinf)) < 0)
     {
-        printf("%d", ret);
-        fflush(stdout);
         perror("IOCTL");
         close(fd);
         return -1;

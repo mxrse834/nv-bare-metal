@@ -94,33 +94,37 @@ static int gp108_open(struct inode *inode, struct file *file)
     return 0;
 }
 
-static long gpu_read_reg
-
 static long gp108_gpu_info(struct file *file, unsigned int cmd, unsigned long arg)
 {
-    if (cmd != GPU_INFO)
+    switch (cmd)
     {
+    case 'GPU_INFO':
+        /// GPU_INFO_OUPUT
+        u32 pmc_id;
+        struct gp108_dev *gp108;
+        struct gp108_info gp108_info = {};
+        gp108 = file->private_data;
+
+        pmc_id = readl(gp108->bar0 + 0x0000); //[ 3250.696994] 0x138000a1
+
+        u8 gpu_id = (pmc_id >> 20);
+        u8 revision = (pmc_id) & 0xff;
+
+        gp108_info.device = gp108->pdev->device;
+        gp108_info.gpu_id = gpu_id;
+        gp108_info.revision = revision;
+        gp108_info.vendor = gp108->pdev->vendor;
+
+        if (copy_to_user((void __user *)arg, &gp108_info, sizeof(gp108_info)))
+        {
+            return -EFAULT;
+        }
+        break;
+    case 'gpu_reg_read':
+        // complete
+        break;
+    default:
         return -ENOTTY;
-    }
-    /// GPU_INFO_OUPUT
-    u32 pmc_id;
-    struct gp108_dev *gp108;
-    struct gp108_info gp108_info = {};
-    gp108 = file->private_data;
-
-    pmc_id = readl(gp108->bar0 + 0x0000); //[ 3250.696994] 0x138000a1
-
-    u8 gpu_id = (pmc_id >> 20);
-    u8 revision = (pmc_id) & 0xff;
-
-    gp108_info.device = gp108->pdev->device;
-    gp108_info.gpu_id = gpu_id;
-    gp108_info.revision = revision;
-    gp108_info.vendor = gp108->pdev->vendor;
-
-    if (copy_to_user((void __user *)arg, &gp108_info, sizeof(gp108_info)))
-    {
-        return -EFAULT;
     }
 
     return 0;
@@ -144,14 +148,14 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
         err = -ENOMEM;
         goto struct_free;
     }
-    printk(KERN_ERR"s1");
+    printk(KERN_ERR "s1");
     gp108->pdev = dev;
     // u32 p0, p1, p2, p3, pfifo_intr;
 
     err = pci_enable_device(gp108->pdev);
     if (err)
         goto disable;
-    printk(KERN_ERR"s2");
+    printk(KERN_ERR "s2");
 
     pci_set_master(gp108->pdev);
 
@@ -175,8 +179,7 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
             goto release;
         }
     }
-        printk(KERN_ERR"s3");
-
+    printk(KERN_ERR "s3");
 
     /// MMIO
     gp108->bar0_start = pci_resource_start(gp108->pdev, 0); // pass 0 as offset for BAR0
@@ -187,7 +190,7 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
         err = -ENOMEM;
         goto release;
     }
-        printk(KERN_ERR"s4");
+    printk(KERN_ERR "s4");
 
     // SAVING STATE
     // pb_dma holds the physical device address of the allocated buffer may or may not be the direct physical address of the buffer, depending on the architecture and memory management(IOMMU).
@@ -208,9 +211,9 @@ static int probe(struct pci_dev *dev, const struct pci_device_id *id)
     gp108->miscdev.fops = &gp108_fops;
     gp108->miscdev.parent = &gp108->pdev->dev;
     err = misc_register(&gp108->miscdev);
-    if(err)
+    if (err)
     {
-        dev_err(gp108->pdev,"Unable to register MISCDEVICE\n");
+        dev_err(gp108->pdev, "Unable to register MISCDEVICE\n");
         goto free_mem;
     }
 
@@ -238,7 +241,7 @@ static void remove(struct pci_dev *dev)
     dma_free_coherent(&pvt->pdev->dev, 4096, pvt->pb_cpu, pvt->pb_dma);
     pci_iounmap(dev, pvt->bar0);
     pci_release_regions(pvt->pdev);
-    pci_clear_master(pvt->pdev); 
+    pci_clear_master(pvt->pdev);
     pci_disable_device(pvt->pdev);
     kfree(pvt);
     printk(KERN_INFO "nv_probe: removed\n");
